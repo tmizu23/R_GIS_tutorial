@@ -1,614 +1,795 @@
-## --------------------------------------------------------------------
-# title: "Rã‚’ç”¨ã„ãŸGIS"
-# author: "æ ªå¼ä¼šç¤¾ã‚¨ã‚³ãƒªã‚¹ æ°´è°·è²´è¡Œ"
-# date: "2018å¹´4æœˆ5æ—¥"
-## --------------------------------------------------------------------
+#' ---
+#' title: "R‚ğ—p‚¢‚½GIS"
+#' author: "Š”®‰ïĞƒGƒRƒŠƒX …’J‹Ms"
+#' date: "2018”N4Œ5“ú"
+#' output:
+#'    html_document:
+#'      keep_md: true
+#'      toc: true
+#'      toc_float:
+#'         collapsed: false
+#'         smooth_scroll: true
+#'      toc_depth: 3
+#'      number_sections: true
+#'      md_extensions: -ascii_identifiers
+#'      highlight: kate
+#'      css: styles.css
+#' ---
 
-install.packages(c("sf", "dplyr", "tidyr","ggplot2", "raster", "mapview", "jpndistrict", "maptools","igraph"),dependencies=T)
-install.packages(c("curl", "png", "jpeg", "spatialEco","igraph"),dependencies=T)
+#+ echo=F
+options(max.print="75")
+knitr::opts_chunk$set(echo=TRUE,
+               cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+knitr::opts_knit$set(width=75)
 
+#++++++++++++++++++++++++++++++++++++++
+#' #€”õ•Ò 
+#++++++++++++++++++++++++++++++++++++++
+
+#++++++++++++++++++++++++++++
+#' ##ƒCƒ“ƒXƒg[ƒ‹ 
+#++++++++++++++++++++++++++++
+#' ˆÈ‰º‚ÌŠÂ‹«‚ğ—pˆÓ‚µ‚Ä‚­‚¾‚³‚¢B
+#' 
+#' * Windows OS >=7
+#' * R >= 3.4.1
+#' * RStudio >= 1.0
+#'
+#' g—p‚·‚éƒf[ƒ^‚ğƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚­‚¾‚³‚¢B
+#' 
+#' * [g—pƒf[ƒ^ƒ_ƒEƒ“ƒ[ƒh]()
+#'
+#' ƒpƒbƒP[ƒW‚ğƒCƒ“ƒXƒg[ƒ‹‚µ‚Ü‚·B
+#+ eval=F
+install.packages(c("sf","geos","dplyr","tidyr","raster","ggplot2","mapview","jpndistrict","maptools","igraph","dismo"),dependencies=T,type="win.binary")
+
+#' ƒ‰ƒCƒuƒ‰ƒŠ‚ğ“Ç‚İ‚İ‚Ü‚·B
 library(sf)
 library(dplyr)
+library(purrr)
 library(tidyr)
 library(raster)
 library(mapview)
 library(jpndistrict)
-library(maptools)
+#library(maptools)
 library(ggplot2)
+library(dismo)
 
-## --------------------------------------------------------------------
-# åŸºæœ¬ç·¨
-## --------------------------------------------------------------------
-## ãƒ™ã‚¯ã‚¿ã®å‡¦ç†
-## --------------------------------------------------------------------
-### ãƒ™ã‚¯ã‚¿ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿ã€ç¢ºèªã€è¡¨ç¤ºï¼‘
-data(wrld_simpl,package="maptools")ã€€#ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿
-wld<-st_as_sf(wrld_simpl) #spå½¢å¼ã‹ã‚‰sfå½¢å¼ã«å¤‰æ›
-class(wld) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-head(wld) #ãƒ‡ãƒ¼ã‚¿ã®ä¸­èº«
-str(wld) #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±
-names(wld) #ãƒ‡ãƒ¼ã‚¿ã®å±æ€§å
-summary(wld) #å±æ€§å€¤ã®ã‚µãƒãƒªãƒ¼
-st_crs(wld) #ãƒ‡ãƒ¼ã‚¿ã®ç©ºé–“å‚ç…§ç³»
-st_bbox(wld) #ãƒ‡ãƒ¼ã‚¿ã®ç¯„å›²
-plot(wld) #åœ°å›³è¡¨ç¤º(å„å±æ€§ã‚’ä¸»é¡Œã¨ã—ã¦)
-plot(wld["NAME"]) #åœ°å›³è¡¨ç¤º(NAMEå±æ€§ã®ã¿)
-mapview(wld) #ã‚¤ãƒ³ã‚¿ãƒ©ã‚¯ãƒ†ã‚£ãƒ–ãªåœ°å›³è¡¨ç¤º
+#++++++++++++++++++++++++++++
+#' ##Šî‘b’m¯ 
+#++++++++++++++++++++++++++++
+
+#++++++++++++++++++
+#' ###ƒpƒCƒv
+#++++++++++++++++++
+#' ƒpƒCƒv¶‘¤‚ÌŠÖ”‚Ìo—ÍŒ‹‰Ê‚ğƒpƒCƒv‰E‘¤‚ÌŠÖ”‚Ì‘æˆêˆø”‚É‚·‚é
+#head(1:5,3)‚ğƒpƒCƒv‚Å‘‚­‚Æ
+1:5 %>% head(3)
+#ƒpƒCƒv‚Ìo—Í‚ğŸ‚ÌƒpƒCƒv‚Ì“ü—Í‚É‚Å‚«‚é
+c(1,10,100) %>% tan %>% sin %>% cos
+#.‚ğg‚¤‚Æ‘æ1ˆø”ˆÈŠO‚É‚Å‚«‚é
+3 %>% head(1:5,.)
+
+#++++++++++++++++++
+#' ###mapŠÖ” 
+#++++++++++++++++++
+#' ƒxƒNƒgƒ‹‚©ƒŠƒXƒg‚ğ“ü—Í‚µAŠe—v‘f‚ÉŠÖ”‚ğ“K—p‚µA“ü—Í‚Æ“¯‚¶’·‚³‚ÌƒŠƒXƒg‚ğ•Ô‚·
+#x‚ğ•½‹Ï’l‚Æ‚µ‚½³‹K—”‚ğ5ŒÂì¬‚·‚éŠÖ”‚ğ’è‹`
+myfunc<-function(x){
+  rnorm(5,x)
+}
+#Še’l‚ğˆø”‚Æ‚µ‚ÄAmyfuncŠÖ”‚ğ“K—p‚·‚éB–ß‚è’l‚ÍAŠe5ŒÂ‚Ì—”‚ğ‚Á‚½3—v‘f‚ÌƒŠƒXƒgB
+c(1,10,100) %>% map(myfunc)
+#+ results='hide'
+#ˆÈ‰º‚Ì‚æ‚¤‚ÉŠÈ—ª‰»‚µ‚Ä‘‚¯‚éB~‚ÍfunctionA.x‚Íˆø”‚ğ•\‚·B
+c(1,10,100) %>% map(~rnorm(5,.x))
+#+ results='markup'
+#ƒŠƒXƒg‚ÌŠe—v‘f‚²‚Æ‚É•½‹Ï’l‚ğŒvZ‚·‚éê‡B–ß‚è’l‚ÍAg’·‚Ì•½‹Ï’lA‘Ìd‚Ì•½‹Ï’l‚Ì2—v‘f‚ÌƒŠƒXƒg
+mylist<-list(height=130:140,weight=40:50)
+mylist %>% map(mean)
+
+#++++++++++++++++++
+#' ###ƒf[ƒ^‚Ì•ÏŒ`
+#++++++++++++++++++
+#‰¡’·‚Èƒf[ƒ^‚ğì¬
+data <- tibble(
+  Point = c("’n“_A","’n“_B"),
+  Red = c(0.1,0.3),
+  Green = c(0.3,0.2),
+  Blue = c(0.5,0.6)
+)
+print(data)
+
+#c’·‚Ìƒf[ƒ^‚É•ÏŠ·
+data2<-data %>% gather(key = Band, value="Refrectance",-Point)
+#‰¡’·‚Ìƒf[ƒ^‚É•ÏŠ·
+data2 %>% spread(key=Band,value=Refrectance)
+
+#++++++++++++++++++++++++++++++++++++++
+#' #ƒxƒNƒ^Šî–{•Ò
+#++++++++++++++++++++++++++++++++++++++
+#'
+#++++++++++++++++++++++++++++
+#' ##Šî–{‘€ì
+#++++++++++++++++++++++++++++
+
+#' ### ƒVƒF[ƒvƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚İ‚½‚¢
+landcover<-read_sf("data/landcover.shp",options=c("ENCODING=CP932"))
+
+#' ### ƒf[ƒ^‚ÌŠT—v‚ğŠm”F‚µ‚½‚¢
+head(landcover)
+
+#' ### ’n}‚ğ•\¦‚µ‚½‚¢
+plot(landcover)
+
+#' ### ƒf[ƒ^ƒNƒ‰ƒX‚ğŠm”F‚µ‚½‚¢
+class(landcover)
+
+#' ### ƒf[ƒ^‚Ì\‘¢‚ğŠm”F‚µ‚½‚¢
+str(landcover) 
+
+#' ### ‘®«–¼‚ğŠm”F‚µ‚½‚¢
+names(landcover)
+
+#' ### ‘®«’l‚ÌƒTƒ}ƒŠ[‚ğŠm”F‚µ‚½‚¢
+summary(landcover)
+
+#' ### ƒf[ƒ^‚Ì”ÍˆÍ‚ğŠm”F‚µ‚½‚¢
+st_bbox(landcover)
+
+#' ### Rstudio‚Å‘®«•\‚ğŠm”F‚µ‚½‚¢
+View(landcover)
+
+#' ### ƒCƒ“ƒ^ƒ‰ƒNƒeƒBƒu‚È’n}‚ğ•\¦‚µ‚½‚¢
+mapview(landcover)
+
+#' ### ƒVƒF[ƒvƒtƒ@ƒCƒ‹‚ğ‘‚«o‚µ‚½‚¢
+st_write(landcover, "mydata/landcover2.shp",layer_options = "ENCODING=UTF-8",delete_layer = TRUE)
+
+#++++++++++++++++++++++++++++
+#' ##À•WŒn‚Ì‘€ì 
+#++++++++++++++++++++++++++++
+
+#' ### ƒf[ƒ^‚Ì‹óŠÔQÆŒn‚ğŠm”F‚µ‚½‚¢
+st_crs(landcover) 
+
+#' ### ‹óŠÔQÆŒn‚ğEPSGƒR[ƒh‚Åw’è‚µ‚½‚¢
+landcover_epsg<-st_set_crs(landcover,2451)
+
+#' ### •Ê‚ÌÀ•WŒn‚É•ÏŠ·‚µ‚½‚¢
+landcover_latlon<-st_transform(landcover,4612)
+
+#' ### ƒf[ƒ^‚ÌƒWƒIƒƒgƒŠ‚ğŠm”F‚µ‚½‚¢
+st_geometry(landcover)
+
+#++++++++++++++++++++++++++++
+#' ##ƒf[ƒ^‚Ìì¬E•ÒW 
+#++++++++++++++++++++++++++++
+
+#' ### ƒ|ƒCƒ“ƒgƒf[ƒ^‚ğì¬‚µ‚½‚¢
+p1<-st_point(c(1,2)) #sfgƒNƒ‰ƒX
+p2<-st_point(c(2,1))
+p1
+p2
+mygeom<-st_sfc(p1,p2) #sfcƒNƒ‰ƒX
+mygeom
+myname <- c("point1","point2") #‘®«’l‚ğ“ü—Í
+point_f<-st_sf(name=myname,geom=mygeom) #sfƒNƒ‰ƒX
+point_f
+
+#' ### ƒ‰ƒCƒ“ƒf[ƒ^‚ğì¬‚µ‚½‚¢
+pts1 = rbind(c(-1,-1), c(1,1), c(2,0), c(3,2))
+pts2 = rbind(c(1,-1), c(2,2), c(3,1), c(2,4))
+ls1 = st_linestring(pts1)
+ls2 = st_linestring(pts2)
+mygeom<-st_sfc(ls1,ls2) #sfcƒNƒ‰ƒX
+myname <- c("line1","line2") #‘®«’l‚ğ“ü—Í
+line_f<-st_sf(myname,mygeom) #sfƒNƒ‰ƒX
+
+#' ### ƒ|ƒŠƒSƒ“ƒf[ƒ^‚ğì¬‚µ‚½‚¢
+pts = rbind(c(-1,-1), c(1,-1), c(1,1), c(-1,1), c(-1,-1))
+b0 = st_polygon(list(pts)) #sfgƒNƒ‰ƒX
+b1 = b0 + c(2,0) #b0‚Ìƒ|ƒŠƒSƒ“‚ÌXÀ•W‚ğ2‚¸‚ç‚µ‚½ƒ|ƒŠƒSƒ“‚ğì¬
+b2 = b0 * 0.5 + c(0,1.5) #b0‚Ìƒ|ƒŠƒSƒ“‚ğk¬‚µ‚ÄYÀ•W‚ğ1.5‚¸‚ç‚µ‚½ƒ|ƒŠƒSƒ“‚ğì¬
+mygeom<-st_sfc(b0,b1,b2) #sfcƒNƒ‰ƒX
+myname<-data.frame(number=c(1,2,3),species=c("dog","cat","cat")) #‘®«ƒf[ƒ^‚ğì¬
+#+ eval=F
+poly_f<-st_sf(myname,geom) #sfƒNƒ‰ƒX #Bug ref.#782
+
+#' ### ƒ‰ƒ“ƒ_ƒ€ƒ|ƒCƒ“ƒg‚ğì¬‚µ‚½‚¢
+pnt<-st_sample(landcover,1000) #landcover‚Ì”ÍˆÍ‚É1000“_
+plot(pnt,pch=".",cex=2)
+
+#' ### ƒƒbƒVƒ…‚ğì¬‚µ‚½‚¢
+mesh <- st_make_grid(n=c(10,5), offset = c(24920,2740), cellsize = c(6,6),crs = 2451)
+mesh <- st_sf(mesh)
+plot(mesh,axes=T)
+
+#' ### ƒ|ƒŠƒSƒ“‚ğƒ‰ƒCƒ“‚É•ÏŠ·‚µ‚½‚¢
+landcover_l<-landcover %>% st_cast("LINESTRING")
+
+#' ### sfƒNƒ‰ƒX‚©‚çspƒNƒ‰ƒX‚É•ÏŠ·‚µ‚½‚¢
+
+#' ### spƒNƒ‰ƒX‚©‚çsfƒNƒ‰ƒX‚É•ÏŠ·‚µ‚½‚¢ 
+
+#++++++++++++++++++++++++++++
+#' ##’n}•\¦ 
+#++++++++++++++++++++++++++++
+
+#' ### w’è‚µ‚½ƒf[ƒ^‚ğ•\¦‚µ‚½‚¢
+plot(landcover["subclass"])
+
+#' ### À•W²‚ğ•\¦‚µ‚½‚¢
+plot(landcover["subclass"],axes=T)
+
+#' ### –}—á‚Ì•\¦•‚ğw’è‚µ‚½‚¢
+plot(landcover["subclass"],key.width = lcm(3))
+
+#' ### ggplot2‚Å•\¦‚µ‚½‚¢
+ggplot() + 
+  geom_sf(data = landcover,aes(fill = subclass))
+
+#' ### À•W²‚ÌÀ•WŒn‚ğw’è‚µ‚½‚¢
+ggplot() + 
+  geom_sf(data = landcover,aes(fill = subclass)) +
+  coord_sf(datum = 2451)
+
+#' ### À•W²‚Æ”wŒi‚ğÁ‚µ‚½‚¢
+ggplot() + 
+  geom_sf(data = landcover,aes(fill = subclass)) +
+  coord_sf(datum = NA) +
+  theme_void()
+
+#' ### –}—á‚ÌF‚ğw’è‚µ‚½‚¢
+mycol <- c("gray", "black", "white", "darkgreen","brown","lightgreen","lightblue", "blue","orange","green","yellow")
+ggplot() + 
+  geom_sf(data = landcover,aes(fill = subclass)) +
+  scale_fill_manual(values = mycol) + 
+  coord_sf(datum = NA) +
+  theme_void()
+
+#' ### ƒf[ƒ^‚ğd‚Ë‚½‚¢
+ggplot() + 
+  geom_sf(data = landcover,aes(fill = subclass)) +
+  geom_sf(data = pnt,size=0.5) +
+  geom_sf(data = mesh,fill = "transparent",color="white",size=1)
+
+#++++++++++++++++++++++++++++
+#' ##ƒf[ƒ^‚Ì‘I‘ğEŒŸõ 
+#++++++++++++++++++++++++++++
+
+#' ### “Á’è‚Ìs‚Ìƒf[ƒ^‚ğ’Šo‚µ‚½‚¢
+landcover[1,]
+
+#' ### “Á’è‚Ì—ñ‚Ìƒf[ƒ^‚ğ’Šo‚µ‚½‚¢
+landcover[,"class"]
+
+#' ### “Á’è‚Ì—ñ‚Ìƒf[ƒ^‚ğƒxƒNƒgƒ‹‚Å’Šo‚µ‚½‚¢
+landcover$class
+
+#' ### ‘®«’l‚Åƒf[ƒ^‚ğ’Šo‚µ‚½‚¢
+landcover_A<-landcover %>% dplyr::filter(class=="\‘¢•¨")
+plot(landcover_A["class"])
+
+#' ### •¡”‚Ì‘®«’l‚Åƒf[ƒ^‚ğ’Šo‚µ‚½‚¢
+landcover_B<-landcover %>% dplyr::filter(subclass %in% c("‚–Ø","ì"))
+plot(landcover_B["subclass"])
+
+#' ### Šeƒ|ƒŠƒSƒ“‚Éd‚È‚éƒ|ƒCƒ“ƒg‚ÌƒCƒ“ƒfƒbƒNƒX‚ğ’m‚è‚½‚¢
+st_intersects(mesh,pnt)
+
+#' ### Šeƒ|ƒŠƒSƒ“‚Éd‚È‚éƒ|ƒCƒ“ƒg‚Ì”‚ğ’m‚è‚½‚¢
+st_intersects(mesh,pnt) %>% lengths
+
+#' ### Œğ·‚·‚éƒIƒuƒWƒFƒNƒg‚ğ’Šo‚µ‚½‚¢
+inter<-landcover %>% filter(lengths(st_intersects(.,mesh))>0)
+plot(inter)
+
+#++++++++++++++++++++++++++++
+#' ##‹óŠÔ‰‰Z 
+#++++++++++++++++++++++++++++
+
+#' ### Œğ·‚µ‚½ƒIƒuƒWƒFƒNƒg‚ğØ‚è”²‚«‚½‚¢
+inter<-st_intersection(landcover,mesh)
+plot(inter)
+
+#' ### ƒ|ƒŠƒSƒ“‚ÌdS‚ğ‹‚ß‚½‚¢
+cent<-st_centroid(mesh)
+plot(cent)
+
+#' ### ƒoƒbƒtƒ@[‚ğì¬‚µ‚½‚¢
+st_buffer(cent,2) %>% plot
+
+#++++++++++++++++++++++++++++
+#' ##ƒf[ƒ^‚ÌŒv‘ª 
+#++++++++++++++++++++++++++++
+
+#' ### –ÊÏ‚ğŒv‘ª‚µ‚½‚¢
+st_area(landcover)
+
+#' ### ’·‚³‚ğŒv‘ª‚µ‚½‚¢
+st_length(landcover_l)
+
+#' ### ’n•¨‚Ì‹——£‚ğŒv‘ª‚µ‚½‚¢
+st_distance(cent[1,],cent[2:4,])
+
+#++++++++++++++++++++++++++++
+#' ##‘®«î•ñ‚Ì‘€ì
+#++++++++++++++++++++++++++++
+
+#' ### ‘®«‚ÉID‚ğU‚è‚½‚¢
+mesh<-mesh %>% mutate(ID=1:nrow(.))
+mesh
+
+#' ### –ÊÏ‚ğ‘®«‚É’Ç‰Á‚µ‚½‚¢
+landcover_area<-landcover %>% mutate(AREA=st_area(.))
+
+#' ### –ÊÏ‚Ì’PˆÊ‚ğ•ÏX‚µ‚½‚¢
+#ƒwƒNƒ^[ƒ‹haAƒA[ƒ‹aA•½•ûƒLƒ,km^2
+landcover_area %>% mutate(AREA=units::set_units(.$AREA,ha))
+
+#' ### ƒƒbƒVƒ…“à‚Ìƒ|ƒCƒ“ƒg”‚ğ‘®«‚É’Ç‰Á‚µ‚½‚¢
+cnt<-lengths(st_intersects(mesh,pnt))
+mesh2<-mesh %>% mutate(count=cnt)
+
+#' ### ‘®«’l‚ÅŒvZ‚µ‚½‚¢
+mesh2<-mesh2 %>% mutate(AREA=st_area(.))
+mesh2 %>% mutate(density=count/AREA)
+
+#' ### ‘®«—ñ‚ğíœ‚µ‚½‚¢
+landcover %>% dplyr::select(-subclass)
+
+#' ### ‘®«‚¾‚¯‚ğæ‚èo‚µ‚½‚¢
+landcover %>% st_set_geometry(NULL)
+
+#' ### “¯‚¶‘®«‚Ìƒ|ƒŠƒSƒ“‚ğƒ}ƒ‹ƒ`ƒ|ƒŠƒSƒ“‚É‚µ‚½‚¢
+landcover %>% group_by(class) %>% summarise()
+
+#' ### “¯‚¶‘®«‚Ì–ÊÏ‚ğWŒv‚µ‚½‚¢
+landcover_area %>% group_by(class) %>% summarise(TOTALAREA=sum(AREA))
+
+#' ### ƒƒbƒVƒ…“à‚Ì“¯‚¶‘®«‚Ì–ÊÏ‚ğWŒv‚µ‚½‚¢
+landcover_mesh<- st_intersection(landcover,mesh) %>% mutate(ID=1:nrow(.),AREA=st_area(.))
+landcover_mesh<-landcover_mesh %>% group_by(ID,subclass) %>% summarise(AREA=sum(AREA)) 
+
+#' ### ƒƒbƒVƒ…“à‚ÌÅ‘å–ÊÏ‚Ì‘®«‚ğƒƒbƒVƒ…‚Ì‘®«‚É‚µ‚½‚¢
+df<-landcover_mesh %>% group_by(ID) %>% filter(AREA==max(AREA)) %>% st_set_geometry(NULL)
+mesh %>% left_join(df,by="ID")
+
+#++++++++++++++++++++++++++++++++++++++
+#' #ƒ‰ƒXƒ^Šî–{•Ò 
+#++++++++++++++++++++++++++++++++++++++
+#'
+#++++++++++++++++++++++++++++
+#' ##Šî–{‘€ì
+#++++++++++++++++++++++++++++
+
+#' ### ƒ‰ƒXƒ^ƒf[ƒ^‚ğ“Ç‚İ‚İ‚½‚¢
+ortho<-stack('data/cropped-rededge.tif')
+
+#' ### ƒ‰ƒXƒ^ƒf[ƒ^‚ğƒoƒ“ƒh‚ğw’è‚µ‚Ä“Ç‚İ‚İ‚½‚¢
+ortho1<-raster('data/cropped-rededge.tif',layer=1)
+
+#' ### ƒf[ƒ^‚ÌŠT—v‚ğŠm”F‚µ‚½‚¢
+ortho
+
+#' ### ’n}‚ğ•\¦‚µ‚½‚¢
+plot(ortho1)
+
+#' ### ‘ƒZƒ‹”‚ğŠm”F‚µ‚½‚¢
+ncell(ortho)
+
+#' ### XƒZƒ‹”AYƒZƒ‹”Aƒoƒ“ƒh”‚ğŠm”F‚µ‚½‚¢
+dim(ortho)
+
+#' ### ‰ğ‘œ“x‚ğŠm”F‚µ‚½‚¢
+res(ortho)
+
+#' ### ƒoƒ“ƒh”‚ğŠm”F‚µ‚½‚¢
+nlayers(ortho)
+
+#' ### ƒoƒ“ƒh–¼‚ğŠm”F‚µ‚½‚¢
+names(ortho)
+
+#' ### ƒZƒ‹’l‚ÌƒTƒ}ƒŠ[‚ğŠm”F‚µ‚½‚¢
+summary(ortho1)
+
+#' ### ƒf[ƒ^‚Ì”ÍˆÍ‚ğŠm”F‚µ‚½‚¢
+extent(ortho)
+
+#' ### ƒ‰ƒXƒ^ƒf[ƒ^‚ğ‘‚«o‚µ‚½‚¢
+writeRaster(ortho1,filename = "mydata/ortho1.tif", format = "GTiff", overwrite = TRUE)
 
 
-## --------------------------------------------------------------------
-### ãƒ™ã‚¯ã‚¿ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿ã€ç¢ºèªã€è¡¨ç¤ºï¼’
+#++++++++++++++++++++++++++++
+#' ##À•WŒn‚Ì‘€ì
+#++++++++++++++++++++++++++++
 
-library(jpndistrict) #å›½åœŸæ•°å€¤æƒ…å ±ã®è¡Œæ”¿ç•Œãƒ‡ãƒ¼ã‚¿ï¼ˆRç”¨ã«ãƒ‡ãƒ¼ã‚¿å¤‰æ›ã•ã‚ŒãŸã‚‚ã®ï¼‰
-ibaraki<-jpn_pref(admin_name="èŒ¨åŸçœŒ") #èŒ¨åŸçœŒã‚’èª­ã¿è¾¼ã¿
-class(ibaraki) #ã‚¯ãƒ©ã‚¹ã‚’ç¢ºèª
-head(ibaraki,n=3) #ãƒ‡ãƒ¼ã‚¿ã®ä¸­èº«
-str(ibaraki) #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±
-names(ibaraki) #ãƒ‡ãƒ¼ã‚¿ã®å±æ€§å
-summary(ibaraki) #å±æ€§å€¤ã®ã‚µãƒãƒªãƒ¼
-st_crs(ibaraki) #ãƒ‡ãƒ¼ã‚¿ã®ç©ºé–“å‚ç…§ç³»
-st_bbox(ibaraki) #ãƒ‡ãƒ¼ã‚¿ã®ç¯„å›²
-plot(ibaraki) #åœ°å›³è¡¨ç¤º(å„å±æ€§ã‚’ä¸»é¡Œã¨ã—ã¦)
-plot(ibaraki["city"]) #åœ°å›³è¡¨ç¤º(city_nameå±æ€§ã®ã¿)
-mapview(ibaraki) #ã‚¤ãƒ³ã‚¿ãƒ©ã‚¯ãƒ†ã‚£ãƒ–ãªåœ°å›³è¡¨ç¤º
+#' ### ƒf[ƒ^‚Ì‹óŠÔQÆŒn‚ğŠm”F‚µ‚½‚¢
+crs(ortho)
+
+#' ### ‹óŠÔQÆŒn‚ğEPSGƒR[ƒh‚Åw’è‚µ‚½‚¢
+crs(ortho)<-CRS("+init=epsg:2451")
+
+#' ### •Ê‚ÌÀ•WŒn‚É•ÏŠ·‚µ‚½‚¢
+ortho_utm54<-projectRaster(ortho1, crs=CRS("+init=epsg:3100"))
+
+#++++++++++++++++++++++++++++
+#' ##’n}•\¦ 
+#++++++++++++++++++++++++++++
+
+#' ###ƒoƒ“ƒh‚ÆF‚ğw’è‚µ‚Ä•\¦‚µ‚½‚¢
+plot(ortho,1,col=gray.colors(30))
+
+#' ###ƒoƒ“ƒh‚ğRGB‚Éw’è‚µ‚Ä•\¦‚µ‚½‚¢
+plotRGB(ortho, r = 3, g = 2, b = 1, axes = TRUE, stretch = "lin", main = "True Color Composite")
+
+#' ###ggplot2‚Å•\¦‚µ‚½‚¢
 
 
-## --------------------------------------------------------------------
-### ãƒ™ã‚¯ã‚¿ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿ã€ç¢ºèªã€è¡¨ç¤º3
-#ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã¨è§£å‡
-f <- tempfile(fileext = ".zip")
-url<-"http://soil-inventory.dc.affrc.go.jp/download/Shape20/%E8%8C%A8%E5%9F%8E_20.zip"
-download.file(url,f)
-mydir<-"./soil"
-unzip(f, exdir = mydir)
+#++++++++++++++++++++++++++++
+#' ##ƒf[ƒ^‚Ì‘I‘ğEŒŸõ
+#++++++++++++++++++++++++++++
 
-#æ—¥æœ¬èªãƒ•ã‚¡ã‚¤ãƒ«åã‚’ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã«å¤‰åŒ–
-for(fi in list.files(mydir,full.names=TRUE)){
-  file.rename(fi,gsub("èŒ¨åŸ", "ibaraki", fi))
+#' ###ƒ‰ƒXƒ^’l‚ğæ“¾‚µ‚½‚¢
+getValues(ortho1)
+
+#' ###ƒ‰ƒXƒ^’l‚ğ•ÏX‚µ‚½‚¢
+ortho1<-ortho1/65536
+
+#++++++++++++++++++++++++++++
+#' ##ƒf[ƒ^‚Ìì¬E•ÒW
+#++++++++++++++++++++++++++++
+
+#' ###w’è”ÍˆÍ‚ÅØ‚è”²‚«‚½‚¢
+e<-extent(24905,24992,2711,2824)
+orthocrop<-crop(ortho,e)
+
+#' ###ƒ}ƒEƒX‚Å”ÍˆÍ‚ğw’è‚µ‚½‚¢
+
+#++++++++++++++++++++++++++++
+#' ##‹óŠÔ‰‰Z 
+#++++++++++++++++++++++++++++
+
+
+#++++++++++++++++++++++++++++++++++++++ 
+#' #‰—p•Ò 
+#++++++++++++++++++++++++++++++++++++++
+#'
+#++++++++++++++++++++++++++++
+#' ##ƒ}ƒ‹ƒ`ƒXƒyƒNƒgƒ‹‰æ‘œ‚É‚æ‚é“y’n”í•¢‚Ì©“®•ª—Ş 
+#++++++++++++++++++++++++++++
+
+#' ###‰æ‘œ‚Ì“Ç‚İ‚İA‰ºˆ—A‘‚«o‚µ
+
+#ƒf[ƒ^‚ğ“Ç‚İ‚İƒoƒ“ƒh‚ğ–¼‚ğİ’è
+rededge <- stack('data/flight20180703_rededge.tif')
+rededge <- subset(rededge,1:5) #ƒAƒ‹ƒtƒ@ƒoƒ“ƒh‚ğœŠO
+names(rededge) <- c('blue','green','red','nir','rededge')
+rededge
+
+#Ø‚èæ‚è(Å‰‚Íè“®‚ÅÀ{‚µ‚Ä’l‚ğæ“¾)
+#rededgecrop<-raster::select(rededge) #è“®‚Å‘I‘ğ‚·‚éê‡
+e<-extent(24905,24992,2711,2824)
+rededgecrop<-crop(rededge,e)
+
+#‘‚«o‚µ
+crs(rededgecrop)<-CRS("+init=epsg:2451")
+writeRaster(rededgecrop,filename = "mydata/cropped-rededge.tif", format = "GTiff", overwrite = TRUE)
+
+
+# ###‰æ‘œ‚Ì“Ç‚İ‚İAî•ñŠm”FA•\¦
+
+#ƒf[ƒ^‚ğ“Ç‚İ‚İAƒoƒ“ƒh–¼‚ğw’èAî•ñŠm”F
+rededge <- stack('mydata/cropped-rededge.tif')
+names(rededge) <- c('blue','green','red','nir','rededge')
+crs(rededge)
+ncell(rededge)
+dim(rededge)
+res(rededge)
+nlayers(rededge)
+
+#•\¦iblueƒoƒ“ƒhATrueColorAFalseColorANaturalColorj
+plot(rededge,1,col=gray.colors(30))
+plotRGB(rededge, r = 3, g = 2, b = 1, axes = TRUE, stretch = "lin", main = "RedEdge True Color Composite")
+plotRGB(rededge, r = 4, g = 3, b = 2, axes = TRUE, stretch = "lin", main = "RedEdge False Color Composite")
+plotRGB(rededge, r = 3, g = 4, b = 2, axes = TRUE, stretch = "lin", main = "RedEdge Natural Color Composite")
+
+# ### ƒoƒ“ƒhŠÔ‚Ì‘ŠŠÖ
+
+#Šeƒoƒ“ƒh‚ğ’Šo‚µA16bit‚Ì’l‚©‚ç0`1‚Ì”½Ë—¦‚É•ÏŠ·
+b_red<-subset(rededge,3)/65536
+b_nir<-subset(rededge,4)/65536
+b_rededge<-rededge[[5]]/65536
+red_nir<-stack(b_red,b_nir)
+red_rededge<-stack(b_red,b_rededge)
+
+#‘ŠŠÖƒOƒ‰ƒt
+pairs(red_nir, main = "Scatterplot between Red and NIR")
+pairs(red_rededge, main = "Scatterplot between Red and Rededge")
+
+# ### ƒXƒyƒNƒgƒ‹ƒvƒƒtƒ@ƒCƒ‹‚Ìì¬
+
+#“y’n”í•¢‚Ì“Ç‚İ‚İ
+landcover<-read_sf("data/landcover.shp",options=c("ENCODING=CP932"))
+plot(landcover)
+plot(landcover["class"],key.width = lcm(3))
+plot(landcover["subclass"],key.width = lcm(3))
+
+#ƒTƒuƒNƒ‰ƒX‚Ìˆê——‚ğƒxƒNƒgƒ‹‚Åæ“¾
+subcl<-landcover %>% 
+  st_set_geometry(NULL) %>% #sf‚©‚çƒf[ƒ^ƒtƒŒ[ƒ€‚É•ÏŠ·
+  dplyr::distinct(subclass,.keep_all=FALSE) %>% #d•¡‚ğíœ 
+  .$subclass #ƒxƒNƒgƒ‹‚ğ•Ô‚·
+
+#ƒTƒuƒNƒ‰ƒX‚²‚Æ‚Éƒ‰ƒ“ƒ_ƒ€“_‚ğ300ƒ|ƒCƒ“ƒgì¬
+subclass_sampling<-function(x){
+  filter(landcover,subclass==x) %>% 
+    st_sample(300)
+}
+pntlist<-subcl %>% map(subclass_sampling) 
+pnt<-pntlist %>% reduce(c)
+
+#ƒ|ƒCƒ“ƒg‚Ì‘®«‚Éclass‚Æsubclass‚ğ’Ç‰Á
+pnt<-st_intersection(landcover,pnt)
+plot(pnt,pch=".",cex=3)
+
+#Šeƒ|ƒCƒ“ƒg‚Å‚Ìƒoƒ“ƒh’l‚ğ’Šo
+band_df <- raster::extract(rededge, as(pnt,"Spatial"),df=TRUE)
+#ƒ|ƒCƒ“ƒg‚Ì‘®«‚Éƒoƒ“ƒh’li”½Ë—¦‚É•ÏŠ·j‚ğ’Ç‰Á
+pnt<-pnt %>% bind_cols(band_df/65536)
+
+#“y’n”í•¢(‘å‹æ•ª)‚²‚Æ‚Ìƒoƒ“ƒh‚Ì•½‹Ï’l‚ğŒvZ
+df_class_mean<-pnt %>% 
+  st_set_geometry(NULL) %>% 
+  dplyr::select(-ID,-subclass) %>% 
+  group_by(class) %>% 
+  summarise_all(mean) %>% 
+  print
+
+#tidy‚Èƒf[ƒ^‚É•ÏŠ·
+df_class_mean<-df_class_mean %>% 
+  gather(key=Bands,value=Reflectance,-class) %>% 
+  print
+
+#Bands‚ğfactor‚É•ÏŠ·iƒOƒ‰ƒt•\¦‚ÌÛ‚ÉBands‚Ì‡”Ô‚ğ•À‚×‚é‚½‚ßj
+df_class_mean <- transform(df_class_mean, Bands= factor(Bands, levels = c("blue", "green", "red", "rededge", "nir")))
+
+#Šeclass‚Ìƒoƒ“ƒh‚Ì•½‹Ï”½Ë—¦‚ğƒOƒ‰ƒt•\¦
+df_class_mean %>% 
+  ggplot(aes(x=Bands ,y=Reflectance,col=class))+
+  geom_line(aes(group = class),size=1)+
+  geom_point()+
+  labs(title = "Spectral Profile")
+
+
+# ### NDVI‚Ìì¬
+
+#NDVI‚ÌŒvZ
+VI <- function(img, k, i) {
+  bk <- img[[k]]
+  bi <- img[[i]]
+  vi <- (bk - bi) / (bk + bi)
+  return(vi)
 }
 
-ibaraki_soil<-read_sf(mydir,options=c("ENCODING=CP932")) #ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿ã€‚æ—¥æœ¬èªã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚’æŒ‡å®š
-str(ibaraki_soil) #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±
-st_crs(ibaraki_soil) #ãƒ‡ãƒ¼ã‚¿ã®ç©ºé–“å‚ç…§ç³»
-st_bbox(ibaraki_soil) #ãƒ‡ãƒ¼ã‚¿ã®ç¯„å›²
-plot(ibaraki_soil["SoilName"],key.size = lcm(7)) #ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿
-
-
-## --------------------------------------------------------------------
-### ã²ã¨ã„ã
-View(ibaraki_soil)
-
-## --------------------------------------------------------------------
-### ãƒ™ã‚¯ã‚¿ãƒ‡ãƒ¼ã‚¿ã®ä½œæˆ
-#ãƒã‚¤ãƒ³ãƒˆ
-p1<-st_point(c(1,2)) #ãƒã‚¤ãƒ³ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfgã‚¯ãƒ©ã‚¹)
-head(p1) #ãƒ‡ãƒ¼ã‚¿ã®ç¢ºèª
-class(p1) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-plot(p1, pch = 1, col = 'red') #åœ°å›³è¡¨ç¤º
-p2<-st_point(c(2,1)) #ãƒã‚¤ãƒ³ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfgã‚¯ãƒ©ã‚¹)
-geom<-st_sfc(p1,p2) #p1,p2ã‹ã‚‰ãªã‚‹ã‚¸ã‚ªãƒ¡ãƒˆãƒªãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfcã‚¯ãƒ©ã‚¹)
-head(geom) #ãƒ‡ãƒ¼ã‚¿ã®ç¢ºèª
-class(geom) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-plot(p2, pch = 2, col = 'blue') #åœ°å›³è¡¨ç¤º
-name <- c("point1","point2") #å±æ€§å€¤ã‚’å…¥åŠ›
-point_f<-st_sf(name=name,geom) #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã¨å±æ€§ã‚’è¨­å®šã—ã¦ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfã‚¯ãƒ©ã‚¹)
-class(point_f) #ã‚¯ãƒ©ã‚¹ã‚’ç¢ºèª
-head(point_f) #ãƒ‡ãƒ¼ã‚¿ã‚’ç¢ºèª
-plot(point_f,key.size = lcm(4)) #åœ°å›³è¡¨ç¤º
-
-#ãƒãƒªã‚´ãƒ³
-b0 = st_polygon(list(rbind(c(-1,-1), c(1,-1), c(1,1), c(-1,1), c(-1,-1)))) #ãƒãƒªã‚´ãƒ³ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfgã‚¯ãƒ©ã‚¹)
-plot(b0,col="red") #åœ°å›³è¡¨ç¤º
-b1 = b0 + c(2,0) #b0ã®ãƒãƒªã‚´ãƒ³ã®Xåº§æ¨™ã‚’2ãšã‚‰ã—ãŸãƒãƒªã‚´ãƒ³ã‚’ä½œæˆ
-plot(b1,col="blue") #åœ°å›³è¡¨ç¤º
-b2 = b0 * 0.5 + c(0,1.5) #b0ã®ãƒãƒªã‚´ãƒ³ã‚’ç¸®å°ã—ã¦Yåº§æ¨™ã‚’1.5ãšã‚‰ã—ãŸãƒãƒªã‚´ãƒ³ã‚’ä½œæˆ
-geom<-st_sfc(b0,b1,b2) #b0,b1,b2ã‹ã‚‰ãªã‚‹ã‚¸ã‚ªãƒ¡ãƒˆãƒªãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfcã‚¯ãƒ©ã‚¹)
-class(geom) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-a<-data.frame(number=c(1,2,3),species=c("dog","cat","cat")) #å±æ€§ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ
-poly_f<-st_sf(a,geom) #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã¨å±æ€§ã‚’è¨­å®šã—ã¦ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(sfã‚¯ãƒ©ã‚¹)
-class(poly_f) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-head(poly_f) #ãƒ‡ãƒ¼ã‚¿ã®ç¢ºèª
-plot(poly_f) #åœ°å›³è¡¨ç¤º
-
-
-## --------------------------------------------------------------------
-### åº§æ¨™ç³»ã®ç¢ºèªã€è¨­å®šã€å¤‰æ›
-st_crs(ibaraki_soil) #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-st_set_crs(ibaraki_soil,4612) #ç©ºé–“å‚ç…§ç³»ã®è¨­å®š(EPSGã‚³ãƒ¼ãƒ‰)
-soil_latlon<-st_set_crs(ibaraki_soil,4612) #ç©ºé–“å‚ç…§ç³»ã‚’JGD2000ç·¯åº¦çµŒåº¦ã«è¨­å®šã—ã¦å¤‰æ•°ã«ä»£å…¥
-soil_zone9<-st_transform(soil_latlon,2451) #ç·¯åº¦çµŒåº¦ã‹ã‚‰å¹³é¢ç›´è§’åº§æ¨™ç³»9ç³»ã«æŠ•å½±å¤‰æ›
-soil_UTM54<-st_transform(soil_latlon,3100) #ç·¯åº¦çµŒåº¦ã‹ã‚‰UTMåº§æ¨™ç³»ã‚¾ãƒ¼ãƒ³54ã«æŠ•å½±å¤‰æ›
-
-st_crs(soil_latlon) #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-st_crs(soil_zone9) #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-st_crs(soil_UTM54) #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-
-st_geometry(soil_latlon) #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã®åº§æ¨™å€¤ç¢ºèª
-st_geometry(soil_zone9) #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã®åº§æ¨™å€¤ç¢ºèª
-st_geometry(soil_UTM54) #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã®åº§æ¨™å€¤ç¢ºèª
-
-#ãƒ‘ã‚¤ãƒ—ã‚’åˆ©ç”¨ã—ãŸå ´åˆ
-
-library(dplyr)
-soil_latlon<-ibaraki_soil %>% st_set_crs(4612) #è¡Œæ”¿ç•Œãƒ‡ãƒ¼ã‚¿ã®ç©ºé–“å‚ç…§ç³»ã‚’EPSGã‚³ãƒ¼ãƒ‰4612ã«è¨­å®š
-soil_zone9<-ibaraki_soil %>% st_set_crs(4612) %>% st_transform(2451) #EPSG4612ã«è¨­å®šã—ãŸå¾Œã€EPSG2451ã«å¤‰æ›
-soil_UTM54<-ibaraki_soil %>% st_set_crs(4612) %>% st_transform(3100) #EPSG4612ã«è¨­å®šã—ãŸå¾Œã€EPSG3100ã«å¤‰æ›
-
-soil_latlon %>% st_crs() #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-soil_zone9 %>% st_crs() #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-soil_UTM54 %>% st_crs() #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-
-soil_latlon %>% st_geometry() #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã®åº§æ¨™å€¤ç¢ºèª
-soil_zone9 %>% st_geometry() #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã®åº§æ¨™å€¤ç¢ºèª
-soil_UTM54 %>% st_geometry() #ã‚¸ã‚ªãƒ¡ãƒˆãƒªã®åº§æ¨™å€¤ç¢ºèª
-
-
-#helpã®Examplesã‚’å¼µã‚Šä»˜ã‘ã¦å®Ÿè¡Œã—ã¦ã¿ã¾ã—ã‚‡ã†ï¼
-
-
-
-
-
-# --------------------------------------------------------------------
-## ãƒ©ã‚¹ã‚¿ã®å‡¦ç†
-## --------------------------------------------------------------------
-### ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿ã€ç¢ºèªã€è¡¨ç¤ºï¼‘
-climate<-getData('worldclim', var='bio', res=10) #ãƒ‡ãƒ¼ã‚¿ã®ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰
-class(climate) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-climate #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±
-names(climate) #ã‚¹ã‚¿ãƒƒã‚¯ãƒ¬ã‚¤ãƒ¤å
-bio1<-raster(climate,layer=1) #ãƒ©ã‚¹ã‚¿ãƒ¬ã‚¤ãƒ¤ã‚’å–å¾—ï¼ˆå¹´å¹³å‡æ°—æ¸©*10ï¼‰
-plot(bio1) #åœ°å›³è¡¨ç¤º
-bio1_deg<-bio1/10 #ãƒ©ã‚¹ã‚¿ã®å€¤ã‚’å¹´å¹³å‡æ°—æ¸©ã«å¤‰æ›
-zoom(bio1_deg) #ã‚ºãƒ¼ãƒ ï¼ˆç¯„å›²ã®å§‹ç‚¹ã¨çµ‚ç‚¹ã‚’ã‚¯ãƒªãƒƒã‚¯ï¼‰
-click(bio1_deg) #å€¤ã®å–å¾—ï¼ˆã‚¯ãƒªãƒƒã‚¯ã€Escã§çµ‚äº†ï¼‰
-s<-raster::select(bio1_deg) #ç¯„å›²ã‚’é¸æŠã—ã¦å¤‰æ•°ã«ä»£å…¥ï¼ˆç¯„å›²ã®å§‹ç‚¹ã¨çµ‚ç‚¹ã‚’ã‚¯ãƒªãƒƒã‚¯ï¼‰
-plot(s) #åœ°å›³è¡¨ç¤º
-hist(s) #å€¤ã®åˆ†å¸ƒã®ãƒ’ã‚¹ãƒˆã‚°ãƒ©ãƒ è¡¨ç¤º
-density(s) #å€¤ã®åˆ†å¸ƒã®å¯†åº¦è¡¨ç¤º
-
-## --------------------------------------------------------------------
-### ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿ã€ç¢ºèªã€è¡¨ç¤ºï¼’
-#ãƒ‡ãƒ¼ã‚¿ã®ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰
-f <- tempfile(fileext = ".zip")
-url<-"http://www1.gsi.go.jp/geowww/globalmap-gsi/download/data/gm-japan/gm-jpn-el_u_1_1.zip"
-download.file(url,f)
-unzip(f, exdir = ".")
-
-f<-"gm-jpn-el_u_1_1/jpn/el.tif"
-dem<-raster(f) #ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿
-dem #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±
-plot(dem) #åœ°å›³è¡¨ç¤º
-crs(dem) #ç©ºé–“å‚ç…§ç³»ã®ç¢ºèª
-hist(dem) #å€¤ã®åˆ†å¸ƒã®ãƒ’ã‚¹ãƒˆã‚°ãƒ©ãƒ è¡¨ç¤º
-density(dem) #å€¤ã®åˆ†å¸ƒã®å¯†åº¦è¡¨ç¤º
-
-## --------------------------------------------------------------------
-### ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ã®ä½œæˆ
-(r<-raster()) #ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆï¼ˆç¯„å›²ã¨è§£åƒåº¦ã¯ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆå€¤ï¼‰
-class(r) #ã‚¯ãƒ©ã‚¹ã‚’ç¢ºèª
-(r<-raster(ncol=10,nrow=10)) #åˆ—æ•°10ã€è¡Œæ•°10ã®ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆï¼ˆç¯„å›²ã¯ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆå€¤ï¼‰
-(r<-raster(ncol=36,nrow=18,xmn=-1000,xmx=1000,ymn=-100,ymx=900)) #åˆ—æ•°ã€è¡Œæ•°ã€ç¯„å›²ã‚’æŒ‡å®šã—ã¦ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ä½œæˆ
-res(r)<-100 #è§£åƒåº¦ã‚’100ã«å¤‰æ›´
-r #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±ã‚’è¡¨ç¤º
-hasValues(r) #ãƒ©ã‚¹ã‚¿å€¤ãŒã‚ã‚‹ã‹ç¢ºèª
-set.seed(0)
-values(r)<-runif(ncell(r)) #ä¹±æ•°ã‚’ãƒ©ã‚¹ã‚¿ã®å€¤ã«ä»£å…¥
-plot(r) #åœ°å›³è¡¨ç¤º
-r1<-r2<-r3<- raster(nrow=10,ncol=10) #åˆ—æ•°10ã€è¡Œæ•°10ã®ãƒ©ã‚¹ã‚¿ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ
-values(r1) <- 1:ncell(r1) #ãƒ©ã‚¹ã‚¿å€¤ã«1ï½ã‚»ãƒ«æ•°ã®å€¤ã‚’ä»£å…¥
-values(r2) <- runif(ncell(r2)) #ä¹±æ•°ã‚’ãƒ©ã‚¹ã‚¿ã®å€¤ã«ä»£å…¥
-r3 <- r1*r2 #ãƒ©ã‚¹ã‚¿æ¼”ç®—ï¼ˆã‚»ãƒ«ã®å€¤åŒå£«ã‚’æ›ã‘ç®—ï¼‰
-(s<- stack(r1,r2,r3)) #RasterStackã‚’ä½œæˆ
-plot(s) #åœ°å›³è¡¨ç¤º
-(b<-brick(r1,r2,r3)) #RasterBrickã‚’ä½œæˆ
-r<-raster(b,layer=3) #ãƒ©ã‚¹ã‚¿ãƒ¬ã‚¤ãƒ¤ã‚’å–ã‚Šå‡ºã—
-plot(r) #åœ°å›³è¡¨ç¤º
-
-## --------------------------------------------------------------------
-### åº§æ¨™ç³»ã®ç¢ºèªã€è¨­å®šã€å¤‰æ›
-bio1<-raster(climate,layer=1) #æ°—å€™ãƒ‡ãƒ¼ã‚¿ã‹ã‚‰RasterLayerã‚’èª­ã¿è¾¼ã¿
-crs(bio1) #ç©ºé–“å‚ç…§ç³»ã‚’ç¢ºèª
-crs(bio1)<-CRS("+init=epsg:4326") #ç©ºé–“å‚ç…§ç³»ã‚’è¨­å®š
-bio1 #ãƒ‡ãƒ¼ã‚¿ã‚’ç¢ºèª
-plot(bio1) #åœ°å›³è¡¨ç¤º
-bio1_crop<-crop(bio1,extent(138,144,33,45)) #ç¯„å›²ã‚’æŒ‡å®šã—ã¦åˆ‡ã‚ŠæŠœã
-plot(bio1_crop) #åœ°å›³è¡¨ç¤º
-bio1_UTM54 <- projectRaster(bio1_crop, crs=CRS("+init=epsg:3100")) #UTM54ã«æŠ•å½±å¤‰æ›
-bio1_UTM54 #ãƒ‡ãƒ¼ã‚¿ã‚’ç¢ºèª
-options(scipen = 10) #è»¸ã®æŒ‡æ•°è¡¨è¨˜ã‚’ã‚„ã‚ã‚‹
-plot(bio1_UTM54) #åœ°å›³è¡¨ç¤º
-
-
-#helpã®Examplesã‚’å¼µã‚Šä»˜ã‘ã¦å®Ÿè¡Œã—ã¦ã¿ã¾ã—ã‚‡ã†ï¼
-
-
-
-
-## --------------------------------------------------------------------
-# å¿œç”¨ç·¨
-## --------------------------------------------------------------------
-## é™°å½±æ®µå½©å›³ã‚’ä½œæˆã—ã¦ã¿ã‚‹
-alt <- getData('alt', country='JP',mask=TRUE) #æ¨™é«˜ãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿
-class(alt) #ã‚¯ãƒ©ã‚¹ã®ç¢ºèª
-alt #ãƒ‡ãƒ¼ã‚¿ã®æƒ…å ±
-alt <- crop(alt,extent(137,141,34.5,38)) #ç¯„å›²ã‚’æŒ‡å®šã—ã¦åˆ‡ã‚ŠæŠœã
-slope = terrain(alt, opt='slope') #å‚¾æ–œã®ä½œæˆï¼ˆãƒ©ã‚¸ã‚¢ãƒ³ï¼‰
-aspect = terrain(alt, opt='aspect') #æ–œé¢æ–¹ä½ã®ä½œæˆï¼ˆãƒ©ã‚¸ã‚¢ãƒ³ã€€åŒ—ãŒï¼ã§æ™‚è¨ˆå›ã‚Šï¼‰
-hill = hillShade(slope, aspect) #é™°å½±èµ·ä¼ã®ä½œæˆ
-plot(hill, col=grey(0:100/100), legend=FALSE, main='é™°å½±æ®µå½©å›³') #é™°å½±èµ·ä¼ã‚’è¡¨ç¤º
-plot(alt,col=terrain.colors(10, alpha=0.35),zlim=c(0,1500), add=TRUE) #æ¨™é«˜ã‚’é‡ã­åˆã‚ã›
-x <- terrain(alt, opt=c('slope', 'aspect'), unit='degrees') #å‚¾æ–œã€æ–œé¢æ–¹ä½ã‚’RasterStackã§ä½œæˆï¼ˆåº¦æ•°ï¼‰
-hist(x) #åˆ†å¸ƒè¡¨ç¤º
-density(x) #åˆ†å¸ƒè¡¨ç¤º
-writeRaster(slope,"slope.tif",format="GTiff",overwrite=TRUE) #GeoTIFFã«æ›¸ãå‡ºã—
-
-## --------------------------------------------------------------------
-## æ­£è·æ–¹ä½å›³æ³•ã‚’ä½œæˆã—ã¦ã¿ã‚‹
-data(wrld_simpl,package="maptools") #ä¸–ç•Œåœ°å›³ã®èª­ã¿è¾¼ã¿
-wld<-wrld_simpl %>% st_as_sf() %>% st_geometry() #SpatialPolygonã‚¯ãƒ©ã‚¹ã‚’ä¸€æ—¦sfã‚¯ãƒ©ã‚¹ã«å¤‰æ›ã—ã¦ã€sfcã‚¯ãƒ©ã‚¹ã«å¤‰æ›
-aeqd_proj <- '+proj=aeqd +lat_0=39.036694 +lon_0=125.764559' #ä¸­å¿ƒåº§æ¨™ã‚’æŒ‡å®šã—ã¦æ­£è·æ–¹ä½å›³æ³•ã®å®šç¾©ã‚’æŒ‡å®š
-wld_aeqd <- wld %>% st_transform(aeqd_proj) #æŠ•å½±å¤‰æ›
-#è¡¨ç¤ºç¯„å›²ã‚’æŒ‡å®šã—åœ°å›³è¡¨ç¤ºã€‚çµŒç·¯åº¦å›³éƒ­ç·šã‚‚è¡¨ç¤º
-plot(wld_aeqd, col = 'grey80',graticule = st_crs(4326),axes = TRUE,xlim=c(-2000000,2000000),ylim=c(-3000000,3000000),lon = seq(80,180,by=10),main="æ­£è·æ–¹ä½å›³æ³•ã§è¡¨ç¤º")
-#ä¸­å¿ƒä½ç½®ã®ãƒã‚¤ãƒ³ãƒˆã‚’ç·¯çµŒåº¦ã§ä½œæˆã—æŠ•å½±å¤‰æ›
-p<-st_sf(name="å¹³å£Œ",geom=st_sfc(st_point(c(125.764559,39.036694))), crs=4326) %>%
-  st_transform(aeqd_proj)
-#ãƒã‚¤ãƒ³ãƒˆã‚’èµ¤è‰²ã§é‡ã­åˆã‚ã›ã¦è¡¨ç¤º
-plot(p,col="red",pch=20,cex=2,add=T)
-
-p_geom<-p %>% st_transform(aeqd_proj) %>% st_geometry() #sfcã«å¤‰æ›ï¼ˆst_transformã¯ã—ãªãã¦è‰¯ã„ï¼‰
-cent<-p_geom[[1]] #ä¸­å¿ƒç‚¹ã®sfgã‚’å–å¾—
-dist.sfc <- lapply(10^6 * 1:4, function(x) st_buffer(cent,x)) %>% st_sfc() #å¤šé‡ã®ãƒãƒƒãƒ•ã‚¡ãƒ¼sfcã‚’ä½œæˆ
-dist.sf <- st_sf(name=c("1000km","2000km","3000km","4000km"),geom=dist.sfc,crs=aeqd_proj) #sfã‚¯ãƒ©ã‚¹ã«å¤‰æ›
-plot(dist.sf,border="red",col=NA,add=T)ã€€#ãƒãƒƒãƒ•ã‚¡ãƒ¼ã‚’é‡ã­ã¦è¡¨ç¤º
-text(data.frame(x=10^6*1:4,y=0*1:4), labels=dist.sf$name, cex = 0.8) #ãƒ©ãƒ™ãƒ«ã‚’è¡¨ç¤º
-p_guam<-st_sf(name="ã‚°ã‚¢ãƒ ",geom=st_sfc(st_point(c(144.7631,13.4521))), crs=4326) %>%
-  st_transform(aeqd_proj) #åˆ¥ã®ãƒã‚¤ãƒ³ãƒˆã‚’ä½œæˆ
-plot(p_guam,col="blue",pch=20,cex=2,add=T) #ãƒã‚¤ãƒ³ãƒˆã‚’é’è‰²ã§é‡ã­ã¦è¡¨ç¤º
-#æ­£è·å††ç­’å›³æ³•ã§è¡¨ç¤ºï¼ˆæ¨ªæ–¹å‘ã®ç­‰è·é›¢ã¯æ­ªã‚€ï¼‰
-plot(wld, col = 'grey80',graticule = st_crs(4326),axes = TRUE,xlim=c(100,160),ylim=c(10,60),lon = seq(80,180,by=10),main="æ­£è·å††ç­’å›³æ³•ã§è¡¨ç¤º")
-plot(st_transform(p,4326),col="red",pch=20,cex=2,add=T)
-plot(st_transform(p_guam,4326),col="blue",pch=20,cex=2,add=T)
-plot(st_transform(dist.sf,4326),border="red",col=NA,add=T)
-
-
-## --------------------------------------------------------------------
-### åœŸå£Œå›³ã‚’ç·¨é›†ã—ã¦æƒ…å ±ã‚’ã¿ã‚‹ã€‚
-#èª­ã¿è¾¼ã¿ã€è¡¨ç¤º
-mydir<-"./soil" #ãƒ•ã‚¡ã‚¤ãƒ«åã‚’æŒ‡å®šã—ã¦ã‚‚OK
-ibaraki_soil<-read_sf(mydir,options=c("ENCODING=CP932")) #èª­ã¿è¾¼ã¿
-plot(ibaraki_soil["SoilName"],key.size = lcm(7)) #å±æ€§ã‚’æŒ‡å®šã—ã¦è¡¨ç¤º
-#å…¨åŸŸã‚’çµ±åˆï¼ˆçµ±åˆã—ã¦ã€ç°¡ç´ åŒ–ï¼‰
-dojyou_area<-
-  st_union(ibaraki_soil) %>%
-  st_simplify(preserveTopology = FALSE,dTolerance = 0.003)
-plot(dojyou_area)
-#åŒã˜åœŸå£Œã‚’èåˆ
-soil_union<-ibaraki_soil %>% group_by(SoilName) %>% summarise(do_union=T)
-#ãƒãƒ«ãƒãƒãƒªã‚´ãƒ³ã‚’ãƒãƒªã‚´ãƒ³ã«ã—ã¦ã€æŠ•å½±å¤‰æ›ã—ã¦ã€é¢ç©ã‚’è¨ˆç®—
-soil_UTM54<-soil_union %>% st_cast() %>% st_cast("POLYGON") %>% st_transform(3100) %>% mutate(AREA=st_area(.))
-#èåˆã—ãŸåœŸå£Œå›³ã‚’è¡¨ç¤º
-plot(soil_UTM54["SoilName"],border=NA,col=rainbow(17,alpha=0.8),key.size = lcm(7))
-
-#æŠ½å‡º SoilNameåˆ—ã‚’æŠ½å‡ºã—ã€ç‰¹å®šã®åœŸå£Œã®ã¿ã‚’è¡¨ç¤º
-soil_UTM54 %>% dplyr::select("SoilName") %>% filter(SoilName=="è¤è‰²æ£®æ—åœŸ") %>% plot(main="è¤è‰²æ£®æ—åœŸ")
-soil_UTM54 %>% dplyr::select("SoilName") %>% filter(grepl("ã‚¢ãƒ­ãƒ•ã‚§ãƒ³",SoilName)) %>% plot(col=rainbow(4,alpha=0.5),border=NA,main="ã‚¢ãƒ­ãƒ•ã‚§ãƒ³")ã€€#ã‚¢ãƒ­ãƒ•ã‚§ãƒ³ã¨ã¤ãã‚‚ã®ã™ã¹ã¦ã‚’è¡¨ç¤º
-soil_UTM54 %>% transmute(AREA_NO_UNIT=as.numeric(AREA)) %>% filter(AREA_NO_UNIT<10000000) %>% plot(border=NA,main="SMALL AREA") #é¢ç©ãŒå°ã•ã„ã‚‚ã®ã‚’è¡¨ç¤º filterã§UNITã«å¯¾å¿œã—ã¦ã„ãªã„
-
-#ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ¬ãƒ¼ãƒ 
-library(ggplot2)
-df<-soil_UTM54 %>% st_set_geometry(NULL) #ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ¬ãƒ¼ãƒ ã«å¤‰æ›
-df2<-df %>% group_by(SoilName) %>% summarise(TOTALAREA=as.numeric(sum(AREA))) %>% arrange(desc(TOTALAREA)) %>% mutate(SoilName = factor(SoilName, SoilName)) #åœŸå£Œã”ã¨ã«é¢ç©ã‚’é›†è¨ˆã—ãŸã‚‚ã®ã‚’ã€é™é †ã«ä¸¦ã³æ›¿ãˆã€factorã‚‚ãã®é †ç•ªã«ã™ã‚‹
-df2<-df2 %>% mutate(TOTALAREA=TOTALAREA/1000000) #é¢ç©ã‚’å¹³æ–¹ã‚­ãƒ­ã«å¤‰æ›
-ggplot(df2,aes(x=SoilName,y=TOTALAREA))+geom_bar(stat = "identity",fill="lightblue") +
-  labs(title="èŒ¨åŸçœŒã®åœŸå£Œé¢ç©", x="", y="é¢ç©(km^2)")+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) #ã‚°ãƒ©ãƒ•è¡¨ç¤º
-
-#ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãå‡ºã—
-write_sf(soil_UTM54,"soil_UTM54.shp",layer_options="ENCODING=CP932")
-
-
-## --------------------------------------------------------------------
-### åœ°ç†é™¢ã‚¿ã‚¤ãƒ«ã‚’å–å¾—ã—ã¦ã¿ã‚‹
-source("gsitiles.R")
-
-#æ¨™æº–åœ°å›³ã®å–å¾—
-stdmap<-getTile(137.665215,36.294582,137.7,36.314582,15,type="std")
-stdmap
-plotRGB(stdmap)
-
-#èˆªç©ºå†™çœŸã®å–å¾—
-photo<-getTile(137.665215,36.294582,137.7,36.314582,15,type="photo")
-plotRGB(photo)
-
-#æŠ•å½±å¤‰æ›ã¨æ›¸ãå‡ºã—
-stdmapUTM<-projectRaster(stdmap, crs=CRS("+init=epsg:3099"),method='ngb')
-writeRaster(stdmapUTM,"stdmap.tif",datatype="INT1U") #datatypeã‚’æŒ‡å®š
-
-#æ¨™é«˜ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ãƒ»è¡¨ç¤ºãƒ»æŠ•å½±å¤‰æ›ãƒ»æ›¸ãå‡ºã—
-dem<-getTile(137.665215,36.294582,137.7,36.314582,15,type="dem5a")
-plot(dem)
-demUTM<-projectRaster(dem, crs=CRS("+init=epsg:3099"),method='bilinear')
-writeRaster(demUTM,"dem.tif")
-
-#CSç«‹ä½“å›³ã®ä½œæˆ
-cs<-makeCS(dem,shaded=TRUE)
-plotRGB(cs)
-
-#æ¨™æº–åœ°å›³ã¨CSç«‹ä½“å›³ã‚’ä¹—ç®—åˆæˆ
-stdmap_cs<-overlayColor(stdmap,cs,type="multiply")
-plotRGB(stdmap_cs)
-
-
-## --------------------------------------------------------------------
-## ãƒ¡ãƒƒã‚·ãƒ¥ã§ãƒ‡ãƒ¼ã‚¿ã‚’é›†è¨ˆã—ã¦ã¿ã‚‹ã€‚
-
-#èŒ¨åŸçœŒã‚’èª­ã¿è¾¼ã¿
-ibaraki<-jpn_pref(admin_name="èŒ¨åŸçœŒ")
-ibaraki
-plot(ibaraki)
-
-#æŠ•å½±å¤‰æ›
-ibaraki_UTM <- ibaraki %>% st_transform(3100)
-
-#ã¤ãã°å¸‚ã‚’æŠ½å‡º
-tsukuba<-ibaraki_UTM %>% filter(city=="ã¤ãã°å¸‚")
-
-#ç¯„å›²ã®ç¢ºèªã¨è¨­å®š
-tsukuba %>% st_bbox()
-bbox<-c(409000,3978000,426000,4011000)
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ä½œæˆ
-mesh<-matrix(bbox,2,byrow=T) %>% st_multipoint %>% st_sfc(crs=3100) %>% st_make_grid(cellsize=c(1000,1000))%>% st_sf(ID=1:length(.))
-plot(mesh)
-
-#ã¤ãã°å¸‚ã«é‡ãªã‚‹ãƒ¡ãƒƒã‚·ãƒ¥ã ã‘æŠ½å‡º
-inter<-mesh %>% st_intersects(tsukuba,sparse = F)
-mesh<-mesh %>% filter(inter)
-mesh<-mesh %>% mutate(ID=1:length(.))
-plot(mesh)
-
-#ã“ã“ã®å ´æ‰€
-here<-st_point(c(140.096739,36.204601)) %>% st_sfc(crs=4612) %>% st_transform(3100)
-
-#è¡¨ç¤º
-plot(st_geometry(tsukuba))
-plot(mesh,col=NA,add=T)
-plot(here,col="blue",pch=20,cex=2,add=T)
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ä¸­å¿ƒã¨ã“ã®å ´æ‰€ã¨ã®è·é›¢
-dist<-st_distance(here,mesh %>% st_centroid()) %>% as.vector()
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ã®å±æ€§ã«distã‚’è¿½åŠ 
-mesh<-mesh %>% mutate(distance=dist)
-plot(mesh)
-
-# #æ¨™é«˜ã‚’èª­ã¿è¾¼ã¿
-
-bbox<-ibaraki %>% filter(city=="ã¤ãã°å¸‚") %>% st_bbox() %>% as.vector()
-dem<-getTile(bbox[1],bbox[2],bbox[3],bbox[4],11,type="dem10b")
-
-#æŠ•å½±å¤‰æ›
-dem_UTM <- projectRaster(dem, crs=CRS("+init=epsg:3100"),method="bilinear")
-
-#è§£åƒåº¦ã®å¤‰æ›´
-dem100 <- dem_UTM
-res(dem100)<-100
-dem100 <- resample(dem_UTM, dem100, method='bilinear')
-
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ã®çŸ©å½¢ç¯„å›²ã§demã‚’åˆ‡ã‚Šå–ã‚‹
-bbox<-c(409000,3978000,426000,4011000)
-dem_crop<-crop(dem100,extent(bbox[1],bbox[3],bbox[2],bbox[4]))
-plot(dem_crop)
-plot(st_geometry(tsukuba),col=NA,add=T)
-plot(st_geometry(mesh),col=NA,add=T)
-
-
-#èµ·ä¼ã¨å‚¾æ–œã®ä½œæˆ
-slope = terrain(dem_crop, opt='slope', unit='degrees')
-aspect = terrain(dem_crop, opt='aspect', unit='degrees')
-plot(slope)
-plot(aspect,col=rainbow(8))
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ã”ã¨ã®å¹³å‡å‚¾æ–œ
-slope_df<-raster::extract(slope,as(mesh,"Spatial"),fun=mean,df=TRUE,na.rm=TRUE)
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ã®å±æ€§ã«è¿½åŠ 
-mesh<-mesh %>% mutate(slope=slope_df$slope)
-
-#æ–œé¢æ–¹ä½ã®æœ€é »å€¤
-
-#æ±è¥¿å—åŒ—ã«ãƒªã‚¯ãƒ©ã‚¹ã™ã‚‹é–¢æ•°
-asp_reclass<-function(x){
-  #åŒ—ã‹ã‚‰æ™‚è¨ˆå›ã‚Šã€‚0ã¯ãƒ•ãƒ©ãƒƒãƒˆ
-  x[x==0]<-0#FLAT
-  x[0<x&x<45]<-1#N
-  x[45<=x&x<135]<-2#E
-  x[135<=x&x<225]<-3#S
-  x[225<=x&x<315]<-4#W
-  x[x>=315]<-1#N
-  
-  return(x)
+# nir = 4, red = 3
+ndvi <- VI(rededge,4, 3)
+plot(ndvi, col = rev(terrain.colors(10)), main = 'RedEdge-NDVI')
+
+# nir = 4, rededge = 5
+ndre <- VI(rededge,4, 5)
+plot(ndre, col = rev(terrain.colors(10)), main = 'RedEdge-NDRE')
+
+# ndvi‚ÌƒqƒXƒgƒOƒ‰ƒ€•\¦
+hist(ndvi,
+     main = "Distribution of NDVI values",
+     xlab = "NDVI",
+     ylab="Frequency",
+     col = "wheat",
+     xlim = c(-0.5, 1),
+     breaks = 30,
+     xaxt = 'n')
+axis(side=1, at = seq(-0.5,1, 0.05), labels = seq(-0.5,1, 0.05))
+
+# A¶‚Ì’Šo
+veg <- calc(ndvi, function(x){x[x < 0.4] <- NA; return(x)})
+plot(veg, main = 'Veg cover')
+# ndvi‚ğè‡’l‚Æ‚µ‚ÄƒJƒeƒSƒŠ‰»
+vegc <- reclassify(veg, c(-Inf,0.25,1, 0.25,0.3,2, 0.3,0.4,3, 0.4,0.5,4, 0.5,Inf, 5))
+plot(vegc,col = rev(terrain.colors(5)),breaks=0:5, main = 'NDVI based thresholding')
+
+
+# ###‹³t‚È‚µ•ª—Ş(5ƒoƒ“ƒhg—p)
+# set.seed(99)
+# km <- kmeans(values(rededgecrop), centers = 6, iter.max = 100, nstart = 3, algorithm="Lloyd")
+# knr <-raster(rededgecrop,1)
+# knr[] <- km$cluster
+# par(mfrow = c(1,2))
+# plotRGB(rededgecrop, r = 3, g = 2, b = 1, axes = TRUE, stretch = "lin", main = "RedEdge True Color Composite")
+# plot(knr, main = 'Unsupervised classification',breaks=0:6,col=c("gray","orange","white","darkgreen","lightgreen","brown"))
+
+
+# ###‹³t‚È‚µ•ª—Ş(ndvig—p)
+# ndvi[is.na(ndvi)]<-0
+# set.seed(99)
+# km <- kmeans(values(ndvi), centers = 5, iter.max = 100, nstart = 3, algorithm="Lloyd")
+# knr <- ndvi
+# knr[] <- km$cluster
+# par(mfrow = c(1,2))
+# plotRGB(rededgecrop, r = 3, g = 2, b = 1, axes = TRUE, stretch = "lin", main = "RedEdge True Color Composite")
+# plot(knr, main = 'Unsupervised classification',breaks=0:5,col=c("gray","green","brown","darkgreen","lightgreen"))
+
+# ###‹³t‚ ‚è•ª—Ş
+#ƒJƒeƒSƒŠ‚²‚Æ‚Éƒ‰ƒ“ƒ_ƒ€“_‚ğì¬
+cl<-landcover %>% st_set_geometry(NULL) %>% dplyr::distinct(subclass,.keep_all=FALSE) %>% .$subclass
+pnt<-cl %>% map(~filter(landcover,subclass==.) %>% st_sample(300)) %>% reduce(c)
+#“y’n”í•¢‚ğ‘®«‚É’Ç‰Á
+ptsamp<-st_intersection(landcover,pnt)
+plot(ptsamp["subclass"])
+
+#ƒoƒ“ƒh‚Ì’l‚ğƒ‰ƒ“ƒ_ƒ€“_‚Å’Šo
+df <- raster::extract(rededgecrop, as(ptsamp,"Spatial"),df=TRUE)
+#”½Ë—¦‚É‚Í•ÏŠ·‚µ‚È‚¢
+#df <- df/65536
+df <- df %>% dplyr::select(-ID)
+#ƒ‰ƒ“ƒ_ƒ€“_‚Æƒoƒ“ƒh‚Ì’l‚ğŒ‹‡
+sampdata<-bind_cols(ptsamp,df)
+sampdata2<-sampdata %>% st_set_geometry(NULL) %>% dplyr::select(-class)
+#ƒgƒŒ[ƒjƒ“ƒOƒf[ƒ^‚Ìì¬
+j <- kfold(sampdata2, k = 5, by = sampdata2$subclass)
+training2011 <- sampdata2[j!= 1, ] # selected the rows where j equals 1
+validation2011 <- sampdata2[j == 1, ] # selected the rows where j equals [2:k]
+
+#training2011 <- sampdata2
+
+#Œˆ’è–Ø‚ÅŠwK
+library('rpart')
+# Train the model
+cart <- rpart(as.factor(subclass)~., data = training2011, method = 'class', minsplit = 5)
+plot(cart, uniform=TRUE, main="Classification Tree")
+text(cart, cex = 0.8)
+#ŠwKŒ‹‰Ê‚Åƒ‰ƒXƒ^‚©‚ç—\‘ª
+pr2011 <- predict(rededgecrop, cart, type='class', progress = 'text')
+#—\‘ªŒ‹‰Ê‚ğƒvƒƒbƒg
+library(rasterVis)
+classcolor <- c("gray", "black", "white", "darkgreen","brown","lightgreen","lightblue", "blue","orange","green","yellow")
+#classcolor <- rainbow(11)
+levelplot(pr2011, maxpixels = 1e6,
+          col.regions = classcolor,
+          scales=list(draw=FALSE),
+          main = "Decision Tree classification of RedEdge camera")
+
+###¸“x‚Ì•]‰¿
+prclass <- predict(cart, validation2011[,2:ncol(validation2011)], type='class')
+conmat <- data.frame(prediction = prclass, reference = validation2011$subclass)
+conmat <- table(conmat)
+print(conmat)
+n <- sum(conmat)
+print(n)
+nc <- nrow(conmat)
+print(nc)
+diag <- diag(conmat)
+rowsums <- apply(conmat, 1, sum)
+colsums <- apply(conmat, 2, sum)
+p <- rowsums / n
+q <- colsums / n
+OA <- sum(diag) / n
+expAccuracy <- sum(p*q)
+kappa <- (OA - expAccuracy) / (1 - expAccuracy)
+print(OA)
+print(kappa)
+PA <- diag / colsums
+UA <- diag / rowsums
+outAcc <- data.frame(producerAccuracy = PA, userAccuracy = UA)
+print(outAcc)
+
+#++++++++++++++++++++++++++++
+#' ##ƒ}ƒ‹ƒ`ƒXƒyƒNƒgƒ‹‰æ‘œ‚É‚æ‚é…ˆî‚ÌŠˆ«ó‹µ‚Ì”cˆ¬ 
+#++++++++++++++++++++++++++++
+#+ chunka3-2,cache=TRUE
+
+sequoia <- stack('data/flight20180702_ortho.tif')
+sequoia <- subset(sequoia,1:4)
+names(sequoia) <- c('green','red','nir','rededge')
+
+#î•ñŠm”F
+crs(sequoia)
+ncell(sequoia)
+dim(sequoia)
+res(sequoia)
+nlayers(sequoia)
+crs(sequoia)<-CRS('+init=EPSG:2451')
+
+#•\¦
+plot(sequoia,3,col=gray.colors(30))
+tanbo<-read_sf("data/tanbo.shp",options=c("ENCODING=CP932"))
+croped<-crop(sequoia,tanbo)
+sequoia<-mask(croped,tanbo)
+plot(sequoia)
+
+#•\¦iØ‚èæ‚è”ÍˆÍj
+par(mfrow=c(1,2))
+plotRGB(sequoia, r = 3, g = 2, b = 1, axes = TRUE, stretch = "lin", main = "RedEdge True Color Composite")
+plotRGB(sequoia, r = 4, g = 3, b = 2, axes = TRUE, stretch = "lin", main = "RedEdge False Color Composite")
+plotRGB(sequoia, r = 3, g = 4, b = 2, axes = TRUE, stretch = "lin", main = "RedEdge Natural Color Composite")
+
+#‘‚«o‚µ
+writeRaster(sequoia,filename = "mydata/cropped-sequoia.tif", format = "GTiff", overwrite = TRUE)
+
+#ƒmƒCƒYœ‹
+
+nir<-raster(sequoia,3)
+nir<- focal(nir, w=matrix(1/(3*3),nrow=3,ncol=3))
+#ext<-select(nir)
+ext<-extent(24790, 24792, 2761, 2763)
+plot(nir,col=gray.colors(30),ext=ext)
+
+gf <- focalWeight(nir, 0.1, "circle")
+gf <- ifelse(gf == 0, 0, 1)
+rg <- focal(nir, w=gf,fun=max)
+plot(rg,ext=ext)
+#rg<-crop(rg,ext)
+pol <- rasterToPolygons(rg,n=4,dissolve=TRUE,fun=function(x){x>11000})
+sfpol<-st_as_sf(pol) %>% st_cast("POLYGON")
+plot(sfpol)
+sfpol<-sfpol %>% mutate(AREA=st_area(.))
+sfpol
+fpol<-sfpol %>% filter(AREA>units::as_units(80,"cm^2"))
+plot(fpol %>% st_geometry())
+cent<-st_centroid(fpol)
+
+plot(nir,col=gray.colors(30))
+plot(fpol,add=T,col=NA)
+plot(cent,add=T,pch=".",cex=2)
+
+
+rot = function(a) matrix(c(cos(a), sin(a), -sin(a), cos(a)), 2, 2)
+p<-c(24787.8,2755.4)
+g = st_make_grid(n=c(38,12), offset = p, cellsize = c(0.5,0.5))#
+cp<-st_sfc(st_point(p))
+
+
+g<-(g-cp)*rot(-pi*50/180)+cp
+plot(nir,col=gray.colors(30))
+plot(g,axes=T,add=T)
+plot(cent,add=T,pch=".",cex=2)
+
+#ƒƒbƒVƒ…‚ÅWŒv
+g<-st_set_crs(g,2451)
+cnt<-g %>% st_intersects(cent,sparse=T) %>% map_int(length)
+st_sf(g) %>% mutate(ct=cnt) %>% plot
+
+
+#writeRaster(nir,filename = "sequoia-nir.tif", format = "GTiff", overwrite = TRUE)
+#st_write(cent, "cent.shp", delete_layer = TRUE)
+
+plot(nir,ext=ext,col=gray.colors(30))
+plot(nir,ext=ext,col=gray.colors(30))
+
+#NDVI‚ÌŒvZ
+VI <- function(img, k, i) {
+  bk <- img[[k]]
+  bi <- img[[i]]
+  vi <- (bk - bi) / (bk + bi)
+  return(vi)
 }
 
-asp<-calc(aspect,fun=asp_reclass)
+#par(mfrow=c(1,2))
 
-plot(asp,col=rainbow(5))
+#NDVI‚Ì•½‹ÏƒƒbƒVƒ…•\¦
+# For SEQUOIA NIR = 3, red = 2.
+ndvi <- VI(sequoia,3, 2)
+plot(ndvi, col = rev(terrain.colors(10)), main = 'SEQUOIA-NDVI')
+plot(g,axes=T,add=T)
+df<-raster::extract(ndvi,as(g,"Spatial"),fun=mean,df=TRUE)
+st_sf(g) %>% mutate(ndvi=df$layer) %>% filter(ndvi>0.55) %>% plot(pal = rev(heat.colors(10)))
 
-#æœ€é »å€¤ã‚’è¿”ã™é–¢æ•°
-getmode <- function(v) {
-  uniqv <- unique(v)
-  uniqv[which.max(tabulate(match(v, uniqv)))]
-}
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ã§æ–œé¢æ–¹ä½ã‚’æŠ½å‡ºã—ã€ãƒ¡ãƒƒã‚·ãƒ¥IDã”ã¨ã®æœ€é »å€¤ã‚’ç®—å‡º
-aspect_df<-raster::extract(asp,as(mesh,"Spatial"),df=TRUE) %>% group_by(ID) %>% summarise(aspect=getmode(layer))
-#æ–¹ä½ã‚’è¡¨ã™æ•°å€¤ã‚’NEWS+Fã®æ–‡å­—åˆ—ã«å¤‰æ›
-aspect_df<-aspect_df %>% mutate(aspect=plyr::mapvalues(aspect_df$aspect, from = c(0,1,2,3,4), to = c("F","N","E","S","W")))
-#ãƒ¡ãƒƒã‚·ãƒ¥ã®å±æ€§ã«factorã¨ã—ã¦è¿½åŠ 
-mesh<-mesh %>% mutate(aspect=factor(aspect_df$aspect))
-plot(mesh)
-
-
-##åœŸå£Œãƒ‡ãƒ¼ã‚¿ã®èª­ã¿è¾¼ã¿
-ibaraki_soil<-read_sf(mydir,options=c("ENCODING=CP932"))
-#æŠ•å½±å¤‰æ›
-soil_UTM<-ibaraki_soil %>% st_transform(3100)
-#åœŸå£Œãƒ‡ãƒ¼ã‚¿ã‚’ãƒ¡ãƒƒã‚·ãƒ¥ã§åˆ‡ã‚‹
-mesh_soil<-soil_UTM %>% st_intersection(mesh)
-#ãƒ¡ãƒƒã‚·ãƒ¥ã”ã¨ã®åŒã˜åœŸå£Œã‚’ãƒãƒ«ãƒãƒãƒªã‚´ãƒ³ã«ã—ã¦é¢ç©è¨ˆç®—
-mesh_soil<-mesh_soil%>% group_by(ID,SoilName) %>% st_cast("MULTIPOLYGON") %>% mutate(area=as.numeric(st_area(.))) 
-#ãƒ¡ãƒƒã‚·ãƒ¥å†…ã§é¢ç©ãŒå¤§ãã„åœŸå£Œã‚’ãƒ¡ãƒƒã‚·ãƒ¥ã®åœŸå£Œã¨ã™ã‚‹
-mesh_soil_df<-mesh_soil %>% group_by(ID) %>% filter(area==max(area))
-#ãƒ¡ãƒƒã‚·ãƒ¥ã®å±æ€§ã«factorã¨ã—ã¦è¿½åŠ 
-mesh<-mesh %>% mutate(soil=factor(mesh_soil_df$SoilName))
-plot(mesh)
-
-#ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ¬ãƒ¼ãƒ ã«å¤‰æ›
-mesh_df <- mesh %>% st_set_geometry(NULL)
-#ãƒšã‚¢ãƒ—ãƒ­ãƒƒãƒˆ
-mesh_df %>% pairs
-
-
-#ãƒ¡ãƒƒã‚·ãƒ¥ã®éš£æ¥é–¢ä¿‚ï¼ˆç©ºé–“è‡ªå·±ç›¸é–¢ã®è§£æã«åˆ©ç”¨ï¼‰
-library(igraph)
-
-#è‡ªåˆ†ä»¥å¤–ã®ç¸¦æ¨ªã®éš£æ¥è¡Œåˆ—ã‚’ä½œæˆã€‚
-st_rook <- function(a, b = a){
-  st_relate(a, b, pattern = "F***1****",sparse = F)
-}
-
-#æ–œã‚ã‚‚éš£æ¥ã¨ã—ã¦å…¥ã‚Œã‚‹å ´åˆ
-#st_queen <- function(a, b = a){
-#  st_relate(a, b, pattern = "F***T****")
-#}
-
-#éš£æ¥è¡Œåˆ—ã‹ã‚‰ç‰‡æ–¹å‘ã®graphã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ä½œæˆã—ã¦ã€ãƒªã‚¹ãƒˆã«ã™ã‚‹
-nblist<-mesh %>% st_rook() %>% graph_from_adjacency_matrix(mode=c("undirected")) %>% get.edgelist()
-nblist
-
-## --------------------------------------------------------------------
-## è¡›æ˜Ÿãƒ‡ãƒ¼ã‚¿ã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦è¡¨ç¤ºã—ã¦ã¿ã‚‹
-url<-"http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/"
-flist<-c("LC81070352015218LGN00_B2.TIF","LC81070352015218LGN00_B3.TIF","LC81070352015218LGN00_B4.TIF","LC81070352015218LGN00_B5.TIF")
-
-mydir<-"./landsat"
-dir.create(mydir, showWarnings = FALSE)
-
-for(fi in flist){
-  f<-paste(url,fi,sep="")
-  dest<-paste(mydir,fi,sep="/")
-  if(!file.exists(dest)) download.file(f,dest,mode="wb")
-}
-
-files<-list.files(mydir,pattern="TIF$",full.names=TRUE)
-landsat_org<-stack(files)
-
-class(landsat_org)
-landsat_org
-names(landsat_org)
-nlayers(landsat_org)
-dim(landsat_org)
-crs(landsat_org)
-plot(landsat_org,1,col=gray.colors(30))
-
-## --------------------------------------------------------------------
-## è¡›æ˜Ÿãƒ‡ãƒ¼ã‚¿ã‚’åˆ‡ã‚ŠæŠœã„ã¦ã‚«ãƒ©ãƒ¼ã§è¡¨ç¤ºã—ã¦ã¿ã‚‹
-ibaraki<-jpn_pref(admin_name="èŒ¨åŸçœŒ")
-ibaraki_UTM54<-ibaraki %>% st_transform(32654)
-ibaraki_cities<-ibaraki_UTM54 %>% filter(grepl("ã¤ãã°å¸‚|ã¤ãã°ã¿ã‚‰ã„å¸‚|å¸¸ç·å¸‚",city))
-#plot(ibaraki_cities)
-bbox<-ibaraki_cities %>% st_bbox() %>% as.vector()
-landsat<-crop(landsat_org,extent(bbox[1],bbox[3],bbox[2],bbox[4]))
-
-#landsat<-crop(landsat,extent(400000,430000,3980000,4000000))
-
-plotRGB(landsat, r = 3, g = 2, b = 1, axes = TRUE, stretch = "lin",
-        main = "Landsat8 True Color Composite")
-
-plotRGB(landsat, r = 4, g = 3, b = 2, axes = TRUE, stretch = "lin",
-        main = "Landsat8 False Color Composite")
-
-plot(ibaraki_cities,border="white",lwd=2,col=NA,add=T)
-
-## --------------------------------------------------------------------
-## è¡›æ˜Ÿãƒ‡ãƒ¼ã‚¿ã‹ã‚‰æ¤ç”Ÿåœ°åŸŸã¨æ°´åŸŸã‚’æŠ½å‡ºã—ã¦ã¿ã‚‹
-NIR<-raster(landsat,4)
-Red<-raster(landsat,3)
-ndvi <- (NIR-Red)/(NIR + Red)
-plot(ndvi, col = rev(terrain.colors(30)), main = 'NDVI from landsat8')
-
-veg <- ndvi >= 0.4
-#å€¤ã‚’æ®‹ã—ãŸã„å ´åˆã¯ã“ã¡ã‚‰
-#veg <- calc(ndvi, function(x){x >= 0.4})
-plot(veg,legend=FALSE,main = 'æ¤ç”Ÿåœ°åŸŸã‚’æŠ½å‡º')
-
-km <- kmeans(values(landsat), centers=5, iter.max=500, nstart=3, algorithm="Lloyd")
-kmr <- setValues(ndvi, km$cluster)
-plot(kmr,main='ãƒ©ãƒ³ãƒ‰ã‚µãƒƒãƒˆç”»åƒã®æ•™å¸«ãªã—åˆ†é¡')
-
-water<-kmr==1
-plot(water,col=c("white","blue"),main = 'æ°´åŸŸã‚’æŠ½å‡º')
-
-## --------------------------------------------------------------------
-## åœŸå£Œã¨åœ°å½¢ã®é–¢ä¿‚ã‚’èª¿ã¹ã¦ã¿ã‚‹
-#æ¨™é«˜ã‚’èª­ã¿è¾¼ã¿
-f<-"gm-jpn-el_u_1_1/jpn/el.tif"
-dem<-raster(f)
-dem
-crs(dem)<-CRS("+init=epsg:4612")
-
-#åœŸå£Œã‚¨ãƒªã‚¢ã§demã‚’åˆ‡ã‚Šå–ã‚‹
-bbox<-dojyou_area %>% st_bbox() %>% as.vector()
-dem_crop<-crop(dem,extent(bbox[1],bbox[3],bbox[2],bbox[4]))
-plot(dem_crop)
-plot(dojyou_area,col=NA,add=T)
-
-#èµ·ä¼ã¨å‚¾æ–œã®ä½œæˆ
-dem_UTM54 <- projectRaster(dem_crop, crs=CRS("+init=epsg:3100"),method="bilinear") #æ¨™é«˜ãƒ‡ãƒ¼ã‚¿ã®æŠ•å½±å¤‰æ›
-slope = terrain(dem_UTM54, opt='slope') #å‚¾æ–œã®ä½œæˆ
-aspect = terrain(dem_UTM54, opt='aspect') #æ–œé¢æ–¹ä½ã®ä½œæˆ
-hill = hillShade(slope, aspect) #é™°å½±èµ·ä¼ã®ä½œæˆ
-plot(hill, col=grey(0:100/100), legend=FALSE, main='é™°å½±æ®µå½©å›³') #é™°å½±èµ·ä¼ã®ä½œæˆï¼ˆã‚¿ã‚¤ãƒˆãƒ«é–“é•ã„ï¼‰
-plot(slope*180/pi) #å‚¾æ–œã‚’ãƒ©ã‚¸ã‚¢ãƒ³ã‹ã‚‰åº¦ã«å¤‰æ›ã—ã¦è¡¨ç¤º
-plot(aspect*180/pi,col=rainbow(8)) #æ–œé¢æ–¹ä½ã‚’ãƒ©ã‚¸ã‚¢ãƒ³ã‹ã‚‰åº¦ã«å¤‰æ›ã—ã¦è¡¨ç¤º
-
-##åœŸå£Œãƒ‡ãƒ¼ã‚¿ã®ãƒ©ã‚¹ã‚¿åŒ–
-plot(soil_UTM54) #ãƒ™ã‚¯ã‚¿ãƒ‡ãƒ¼ã‚¿ã®è¡¨ç¤º
-soil.sp<-as(soil_UTM54,"Spatial") #sfã‚¯ãƒ©ã‚¹ã‹ã‚‰SpatialPolygonsDataFrameã‚¯ãƒ©ã‚¹ã«å¤‰æ›(spãƒ‘ãƒƒã‚±ãƒ¼ã‚¸)
-soil.sp$SoilName<-as.factor(soil.sp$SoilName) #SoilNameã‚’factorã«å¤‰æ›
-levels(soil.sp$SoilName) #factorã‚’ç¢ºèª
-soil<-rasterize(soil.sp,dem_UTM54,"SoilName",fun="last") #SoilNameã®factorå€¤ã‚’ãƒ©ã‚¹ã‚¿åŒ–ã€‚dem_UTM54ã®ç¯„å›²ã¨è§£åƒåº¦ã‚’ä½¿ç”¨ã€‚1ã‚»ãƒ«ã«è¤‡æ•°ã®ãƒãƒªã‚´ãƒ³ãŒã‚ã‚‹å ´åˆã¯æœ€å¾Œã®ã‚‚ã®ã‚’ä½¿ç”¨ã€‚
-
-plot(soil,breaks=1:17,col=rainbow(17)) #ãƒ©ã‚¹ã‚¿åŒ–ã—ãŸåœŸå£Œå›³ã‚’è¡¨ç¤º
-plot(soil_UTM54,col=NA,add=T) #åœŸå£Œã®å¢ƒç•Œãƒãƒªã‚´ãƒ³ã‚’è¡¨ç¤º
-
-#ãƒ©ãƒ³ãƒ€ãƒ ãƒã‚¤ãƒ³ãƒˆä½œæˆ
-dojyou_area_UTM54<-dojyou_area %>% st_transform(3100) #åœŸå£Œç¯„å›²ã®ãƒ™ã‚¯ã‚¿ãƒ‡ãƒ¼ã‚¿ã‚’æŠ•å½±å¤‰æ›
-pnt<-st_sample(dojyou_area_UTM54,10000) #ç¯„å›²å†…ã«1ä¸‡ç‚¹ã‚’ãƒ©ãƒ³ãƒ€ãƒ ã«ä½œæˆ
-plot(dojyou_area_UTM54) #ç¯„å›²ã®åœ°å›³è¡¨ç¤º
-plot(pnt,pch=".",add=T) #ãƒ©ãƒ³ãƒ€ãƒ ç‚¹ã®è¡¨ç¤º
-
-
-#ãƒ©ã‚¹ã‚¿ã‹ã‚‰å€¤ã‚’æŠ½å‡º
-envs<-stack(dem_UTM54,slope,aspect,soil) #æ¨™é«˜ã€å‚¾æ–œã€æ–œé¢æ–¹ä½ã€åœŸå£Œã®RasterStackã‚’ä½œæˆ
-names(envs)<-c("elev","slope","aspect","soil") #RasterStackã®ãƒ¬ã‚¤ãƒ¤åã‚’å¤‰æ›´
-envs #ãƒ‡ãƒ¼ã‚¿ã®ç¢ºèª
-pnt.sp<-as(pnt,"Spatial") #SpatialPointsã‚¯ãƒ©ã‚¹ã«å¤‰æ›
-ex<-raster::extract(envs,pnt.sp,df=TRUE) #ãƒ©ãƒ³ãƒ€ãƒ ãƒã‚¤ãƒ³ãƒˆã®ä½ç½®ã®RasterStackã®å€¤ã‚’æŠ½å‡º
-head(ex) #æŠ½å‡ºã—ãŸå€¤ã®ç¢ºèª
-
-#ãƒ¢ãƒ‡ãƒ«ä½œæˆã¨äºˆæ¸¬
-ex$soil<-as.factor(ex$soil) #åœŸå£Œãƒ‡ãƒ¼ã‚¿ã¯factorã«å¤‰æ›
-pairs(ex[,2:5],cex=0.1) #ãƒšã‚¢ãƒ—ãƒ­ãƒƒãƒˆ
-
-m<-glm(slope~elev+aspect+soil,data=ex) #å‚¾æ–œã®æ±ºå®šè¦å› ã‚’ãƒ¢ãƒ‡ãƒ«åŒ–
-summary(m) #ãƒ¢ãƒ‡ãƒ«ã®æ¦‚è¦ï¼ˆãƒ¢ãƒ‡ãƒ«ã¯å‡ºé±ˆç›®ã§ã™ï¼‰
-
-result<-predict(envs,m) #ãƒ¢ãƒ‡ãƒ«ã‚’å…¨åŸŸã«é©ç”¨
-par(mfrow=c(1,2)) #è¿½åŠ ï¼ˆãƒ—ãƒ­ãƒƒãƒˆã‚’2åˆ—è¡¨ç¤ºï¼‰
-plot(result) #äºˆæ¸¬ã—ãŸå‚¾æ–œã®çµæœã‚’åœ°å›³è¡¨ç¤º
-slope_mask<-mask(slope,soil) #åœŸå£Œã®ç¯„å›²ã§å‚¾æ–œãƒ‡ãƒ¼ã‚¿ã‚’ãƒã‚¹ã‚¯ï¼ˆå‘¨è¾ºéƒ¨åˆ†ã‚’æ¶ˆã™ï¼‰
-plot(slope_mask) #å®Ÿéš›ã®å‚¾æ–œã‚’è¡¨ç¤º
+# For RedEdge NIR = 3, rededge = 4.
+ndre <- VI(sequoia,3, 4)
+plot(ndre, col = rev(terrain.colors(10)), main = 'SEQUOIA-NDRE')
