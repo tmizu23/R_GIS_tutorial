@@ -42,7 +42,9 @@ knitr::opts_knit$set(width=75)
 #'
 #' 使用するデータをダウンロードしてください。
 #' 
-#' * [使用データダウンロード]()
+#' * [使用データ](https://goo.gl/5zXQYk)
+#' * [スライドのテキスト](https://docs.google.com/presentation/d/1-URRoB1MCcqvXsdt70Po98-USkWems_GkqzFZdslvx4/edit?usp=sharing)
+#' * [スクリプトの実行結果（このhtml）](https://tmizu23.github.io/R_GIS_tutorial/R_GIS_tutorial2018.9.3.html)
 #'
 #' パッケージをインストールします。（最初の1回だけ）
 #+ eval=F
