@@ -691,7 +691,9 @@ g<-ggplot() +
   scale_alpha(name = "", range = c(0.6, 0), guide = F)+
   geom_sf(data = mesh %>% filter(ndvi>0.5),aes(fill = ndvi,alpha=0.3))+
   scale_fill_gradientn(colors=c("white","yellow","red"))+
-  geom_text_repel(data = mesh %>% filter(id %in% c(1,38,191,343,456)),aes(x=X,y=Y,label = id),nudge_y=10)
+  geom_text_repel(data = mesh %>% filter(id %in% c(1,38,191,343,456)),aes(x=X,y=Y,label = id),nudge_y=10)+
+  annotate("text",x=24798,y=2756,label="数字は区画ID")
+  
 plot(g)
 
 #画像をjpgに保存する
@@ -711,17 +713,17 @@ st_write(mesh, "mydata/ndvi_mesh.shp",layer_options = "ENCODING=UTF-8",delete_la
 #'
 rededge <- stack('data/rededge.tif')
 rededge <- subset(rededge,1:5) #アルファバンドを除外
-names(rededge) <- c('blue','green','red','NIR','rededge')
+names(rededge) <- c('blue','green','red','nir','rededge')
 crs(rededge)<-CRS("+init=epsg:2451") #CRSを設定
 
-#切り取り
-e<-extent(24905,24992,2711,2824)
-rededgecrop<-crop(rededge,e)
-
 #解像度変更
-rededge <- rededgecrop
-res(rededge)<-0.5
-rededge <- resample(rededgecrop, rededge, method='bilinear')
+rededge0.5<- rededge
+res(rededge0.5)<-0.5
+rededge <- resample(rededge, rededge0.5, method='bilinear')
+
+#切り取り
+e<-extent(24900,24995,2710,2825)
+rededge<-crop(rededge,e)
 
 #書き出し
 writeRaster(rededge,filename = "mydata/cropped-rededge.tif", format = "GTiff", overwrite = TRUE)
@@ -793,33 +795,36 @@ band_df <- raster::extract(rededge, as(pnt,"Spatial"),df=TRUE)
 #ポイントの属性にバンド値を追加
 pnt<-pnt %>% bind_cols(band_df)
 
-
 #' #### 地物とバンドの反射率の関係を見てみる
-#土地被覆(大区分)ごとのバンドの平均値を計算
+#土地被覆(subclass)ごとのバンドの平均値を計算
 df_class_mean<-pnt %>% 
   st_set_geometry(NULL) %>% 
-  dplyr::select(-ID,-subclass) %>% 
-  group_by(class) %>% 
+  dplyr::select(-ID,-class) %>% 
+  group_by(subclass) %>% 
   summarise_all(mean) %>% 
   print
 
 #縦長なデータに変換
 df_class_mean<-df_class_mean %>% 
-  gather(key=Bands,value=Reflectance,-class) %>% 
+  gather(key=Bands,value=Reflectance,-subclass) %>% 
   print
 
 #反射率に変換
 df_class_mean <- df_class_mean %>% mutate(Reflectance=Reflectance/65536)
+
 #Bandsをfactorに変換（グラフ表示の際にBandsの順番を並べるため）
 df_class_mean <- df_class_mean %>% mutate(Bands= factor(Bands, levels = c("blue", "green", "red", "rededge", "nir")))
 
-# 各classのバンドの平均反射率をグラフ表示
-# レッドエッジの校正がおかしいかも
+# 各subclassのバンドの平均反射率をグラフ表示
+# 結果を見るとレッドエッジの校正がおかしいかも（？）
+classcolor <- c("コンクリート"="gray", "その他"="black","建物" = "white","高木"="darkgreen","砂地"="brown","芝"="lightgreen","水田"="lightblue", "川"="blue","草地"="orange","低木"="green","裸地"="yellow")
 df_class_mean %>% 
-  ggplot(aes(x=Bands ,y=Reflectance,col=class))+
-  geom_line(aes(group = class),size=1)+
+  ggplot(aes(x=Bands ,y=Reflectance,col=subclass))+
+  geom_line(aes(group = subclass),size=1)+
   geom_point()+
-  labs(title = "Spectral Profile")
+  labs(title = "Spectral Profile")+
+  scale_color_manual(values=classcolor)
+  
 
 #++++++++++++++++++
 #' ###教師なし分類をする(5バンド使用)
@@ -859,8 +864,8 @@ head(training_df)
 #' ####決定木で分類する
 #モデルの作成
 model <- rpart(as.factor(subclass)~., data=training_df, method="class")
-plot(model, uniform=TRUE, main="Classification Tree")
-text(model, cex = 0.8)
+plot(model, uniform=TRUE, main="Classification Tree",margin=0.05)
+text(model, cex = 0.7)
 
 #モデルから全域を予測
 pr <- predict(rededge, model, type="class")
@@ -871,7 +876,7 @@ df<-as.data.frame(pr,xy=TRUE)
 classcolor <- c("コンクリート"="gray", "その他"="black","建物" = "white","高木"="darkgreen","砂地"="brown","芝"="lightgreen","水田"="lightblue", "川"="blue","草地"="orange","低木"="green","裸地"="yellow")
 ggplot()+
   geom_raster(data=df, aes(x = x, y = y,fill = layer_value))+
-  scale_fill_manual(values=classcolor)
+  scale_fill_manual(values=classcolor)+ coord_equal(ratio = 1) 
 
 #予測結果を書き出す
 writeRaster(pr,filename = "mydata/RP_predicted_landcover.tif", format = "GTiff", overwrite = TRUE)
@@ -889,7 +894,7 @@ df<-as.data.frame(pr,xy=TRUE)
 classcolor <- c("コンクリート"="gray", "その他"="black","建物" = "white","高木"="darkgreen","砂地"="brown","芝"="lightgreen","水田"="lightblue", "川"="blue","草地"="orange","低木"="green","裸地"="yellow")
 ggplot()+
   geom_raster(data=df, aes(x = x, y = y,fill = layer_value))+
-  scale_fill_manual(values=classcolor)
+  scale_fill_manual(values=classcolor)+ coord_equal(ratio = 1) 
 
 #予測結果を書き出す
 writeRaster(pr,filename = "mydata/RF_predicted_landcover.tif", format = "GTiff", overwrite = TRUE)
@@ -907,7 +912,7 @@ classcolor <- c("コンクリート"="gray", "その他"="black","建物" = "white","高木"=
 df<-as.data.frame(pr,xy=TRUE)
 ggplot()+
   geom_raster(data=df, aes(x = x, y = y,fill = layer_value))+
-  scale_fill_manual(values=classcolor)
+  scale_fill_manual(values=classcolor)+ coord_equal(ratio = 1) 
 
 #予測結果を書き出す
 writeRaster(pr,filename = "mydata/SVM_predicted_landcover.tif", format = "GTiff", overwrite = TRUE)
