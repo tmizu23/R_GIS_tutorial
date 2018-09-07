@@ -34,23 +34,27 @@ knitr::opts_knit$set(width=75)
 #++++++++++++++++++++++++++++
 #' ##インストール 
 #++++++++++++++++++++++++++++
-#' 以下の環境を用意してください。
+#' 以下の環境を用意します。
 #' 
 #' * Windows OS >=7
 #' * R >= 3.5.1
 #' * RStudio >= 1.0
 #'
-#' 使用するデータをダウンロードしてください。
+#' 使用するデータのダウンロードとテキストを用意します。
 #' 
 #' * [使用データ](https://goo.gl/5zXQYk)
 #' * [スライドのテキスト](https://docs.google.com/presentation/d/1-URRoB1MCcqvXsdt70Po98-USkWems_GkqzFZdslvx4/edit?usp=sharing)
 #' * [スクリプトの実行結果（このhtml）](https://tmizu23.github.io/R_GIS_tutorial/R_GIS_tutorial2018.9.3.html)
 #'
-#' パッケージをインストールします。（最初の1回だけ）
+#' パッケージをインストールします。
+#' RStudioを起動して、コンソールに以下を貼り付けて実行します。
 #+ eval=F
-install.packages(c("sf","geos","dplyr","tidyr","raster","ggplot2","ggrepel","mapview","jpndistrict","rpart","randomForest","kernlab"),dependencies=T,type="win.binary")
+install.packages(c("sf","geos","dplyr","tidyr","raster","ggplot2","ggrepel","mapview","jpndistrict","randomForest","kernlab"),dependencies=T,type="win.binary")
 
-#' ライブラリを読み込みます。
+#' ライブラリが読み込めるか確認します。  
+#' RStudioのコンソールに以下を貼り付けて実行します。エラーメッセージが出なければOKです。  
+#' 「～マスクされています：」というメッセージは問題ありません。  
+
 library(sf) #ベクタ処理
 library(raster) #ラスタ処理
 library(dplyr) #属性処理
@@ -63,6 +67,12 @@ library(jpndistrict) #日本の行政界データ
 library(rpart) #決定木
 library(randomForest) #ランダムフォレスト
 library(kernlab) #SVM
+
+#++++++++++++++++++++++++++++
+#' ##プロジェクトの作成
+#++++++++++++++++++++++++++++
+#' RStudioで新規プロジェクトを作成します。  
+#' File > New Projext... > Existing Directory > R_GIS_data2018を指定し「Create Project」を押します。
 
 #++++++++++++++++++++++++++++
 #' ##基礎知識 
