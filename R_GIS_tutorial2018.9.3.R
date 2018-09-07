@@ -72,7 +72,8 @@ library(kernlab) #SVM
 #' ##プロジェクトの作成
 #++++++++++++++++++++++++++++
 #' RStudioで新規プロジェクトを作成します。  
-#' File > New Projext... > Existing Directory > R_GIS_data2018を指定し「Create Project」を押します。
+#' ダウンロードしたデータを解凍し「R_GIS_2018」フォルダを”日本語パス名ではない”場所に置きます。  
+#' File > New Projext... > Existing Directory > 「R_GIS_data2018」を指定し「Create Project」を押します。
 
 #++++++++++++++++++++++++++++
 #' ##基礎知識 
