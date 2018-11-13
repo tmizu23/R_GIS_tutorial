@@ -119,7 +119,7 @@ x %>% reduce(c)
 #++++++++++++++++++
 #' ###データの変形
 #++++++++++++++++++
-#横長なデータを作成
+#'横長なデータを作成
 data <- tibble(
   Point = c("地点A","地点B"),
   Red = c(0.1,0.3),
@@ -128,9 +128,9 @@ data <- tibble(
 )
 print(data)
 
-#縦長のデータに変換
+#'縦長のデータに変換
 data2<-data %>% gather(key = Band, value="Refrectance",-Point)
-#横長のデータに変換
+#'横長のデータに変換
 data2 %>% spread(key=Band,value=Refrectance)
 
 #++++++++++++++++++++++++++++++++++++++
