@@ -129,7 +129,7 @@ data <- tibble(
 print(data)
 
 #'縦長のデータに変換
-data2<-data %>% gather(key = Band, value="Refrectance",-Point)
+data2<-data %>% gather(key = Band, value=Refrectance,Red,Green,Blue)
 #'横長のデータに変換
 data2 %>% spread(key=Band,value=Refrectance)
 
@@ -229,7 +229,7 @@ b2 = b0 * 0.5 + c(0,1.5) #b0のポリゴンを縮小してY座標を1.5ずらしたポリゴンを作成
 mygeom<-st_sfc(b0,b1,b2) #sfcクラス
 myname<-data.frame(number=c(1,2,3),species=c("dog","cat","cat")) #属性データを作成
 #+ eval=F
-poly_f<-st_sf(myname,geom) #sfクラス #Bug ref.#782
+poly_f<-st_sf(myname,mygeom) #sfクラス
 
 #' ### ランダムポイントを作成したい
 pnt<-st_sample(landcover,1000) #landcoverの範囲に1000点
@@ -617,10 +617,10 @@ plot(masked)
 #++++++++++++++++++
 #'
 #NDVIを計算する関数
-calc_NDVI <- function(img, r, n) {
+calc_NDVI <- function(img, n, r) {
   red <- img[[r]]
   nir <- img[[n]]
-  return ((red - nir) / (red + nir))
+  return ((nir-red) / (red + nir))
 }
 
 #NDVIを計算する。SEQUOIAバンドNIR = 3, red = 2.
